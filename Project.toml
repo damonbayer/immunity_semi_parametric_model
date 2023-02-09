@@ -3,6 +3,11 @@ uuid = "581757be-fa0d-46f8-9bd3-3fa93e217e5e"
 authors = ["Damon Bayer <damon@damonbayer.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
+
 [compat]
 julia = "1"
 
