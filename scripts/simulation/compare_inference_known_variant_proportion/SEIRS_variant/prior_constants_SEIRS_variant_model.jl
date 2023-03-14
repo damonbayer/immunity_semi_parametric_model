@@ -1,0 +1,37 @@
+const time_interval_in_days = 7.0
+
+const R₀_non_centered_mean = log(1.5)
+const dur_latent_non_centered_mean = log(2 / 7)
+const dur_infectious_non_centered_mean = log(5 / 7)
+const dur_hospitalized_non_centered_mean = log(3 / 7)
+const dur_icu_non_centered_mean = log(5 / 7)
+const IHR_non_centered_mean = logit(0.02)
+const HICUR_non_centered_mean = logit(0.15)
+const ICUDR_non_centered_mean = logit(0.15)
+const dur_saturated_waning_non_centered_mean = log(20)
+const prop_dur_mixed_waning_non_centered_mean = logit(0.3)
+const prop_variant_2_offset_non_centered_mean = log(1)
+const E_init_prop_non_centered_mean = logit(700 / 3_000_000)
+const I_init_prop_non_centered_mean = logit(1500 / 3_000_000)
+const R_init_prop_non_centered_mean = logit(600_000 / 3_000_000)
+const dur_waning_shape_non_centered_mean = log(1)
+const ρ_deaths_non_centered_mean = logit(0.9)
+const ρ_cases_non_centered_mean = logit(0.2)
+
+const R₀_non_centered_sd = 0.2
+const dur_latent_non_centered_sd = 0.2
+const dur_infectious_non_centered_sd = 0.2
+const dur_hospitalized_non_centered_sd = 0.2
+const dur_icu_non_centered_sd = 0.2
+const IHR_non_centered_sd = 0.2
+const HICUR_non_centered_sd = 0.2
+const ICUDR_non_centered_sd = 0.2
+const dur_saturated_waning_non_centered_sd = 0.05
+const prop_dur_mixed_waning_non_centered_sd = 0.5
+const prop_variant_2_offset_non_centered_sd = 0.8
+const E_init_prop_non_centered_sd = 0.2
+const I_init_prop_non_centered_sd = 0.2
+const R_init_prop_non_centered_sd = 0.4
+const dur_waning_shape_non_centered_sd = 0.5
+const ρ_deaths_non_centered_sd = 0.2
+const ρ_cases_non_centered_sd = 0.2

@@ -2,12 +2,15 @@ module immunity_semi_parametric_model
 using DynamicPPL
 using MCMCChains
 using Distributions
-
+using ForwardDiff
 function NegativeBinomial2(μ, ϕ)
     p = 1 / (1 + μ / ϕ)
     r = ϕ
-    r = clamp(r, nextfloat(zero(r)), prevfloat(typemax(r)))
-    p = clamp(p, nextfloat(zero(p)), one(p))
+    # r = clamp(r, nextfloat(zero(r)), prevfloat(typemax(r)))
+    # p = clamp(p, nextfloat(zero(p)), one(p))
+    # println("μ: ", ForwardDiff.value(μ))
+    # println("ϕ: ", ForwardDiff.value(ϕ))
+    # println("p: ", ForwardDiff.value(p))
     Distributions.NegativeBinomial(r, p)
 end
 export NegativeBinomial2
