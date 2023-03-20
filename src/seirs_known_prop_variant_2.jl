@@ -24,7 +24,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     ρ_cases_non_centered ~ Normal()
     ρ_deaths_non_centered ~ Normal()
-
+a
     ϕ_hospitalizations_non_centered ~ truncated(Normal(), 0, Inf)
     ϕ_new_cases_non_centered ~ truncated(Normal(), 0, Inf)
     ϕ_icu_non_centered ~ truncated(Normal(), 0, Inf)
@@ -36,36 +36,36 @@ prob = ODEProblem{true}(seirs_ode_log!,
     R_init_prop_non_centered ~ Normal()
 
     # Centering tranformations
-    R₀ = exp(R₀_non_centered * R₀_non_centered_sd + R₀_non_centered_mean)
+    R₀ = exp(R₀_non_centered * R₀_non_centered_scale + R₀_non_centered_loc)
 
-    dur_latent = exp(dur_latent_non_centered * dur_latent_non_centered_sd + dur_latent_non_centered_mean)
-    dur_infectious = exp(dur_infectious_non_centered * dur_infectious_non_centered_sd + dur_infectious_non_centered_mean)
-    dur_hospitalized = exp(dur_hospitalized_non_centered * dur_hospitalized_non_centered_sd + dur_hospitalized_non_centered_mean)
-    dur_icu = exp(dur_icu_non_centered * dur_icu_non_centered_sd + dur_icu_non_centered_mean)
+    dur_latent = exp(dur_latent_non_centered * dur_latent_non_centered_scale + dur_latent_non_centered_loc)
+    dur_infectious = exp(dur_infectious_non_centered * dur_infectious_non_centered_scale + dur_infectious_non_centered_loc)
+    dur_hospitalized = exp(dur_hospitalized_non_centered * dur_hospitalized_non_centered_scale + dur_hospitalized_non_centered_loc)
+    dur_icu = exp(dur_icu_non_centered * dur_icu_non_centered_scale + dur_icu_non_centered_loc)
 
-    dur_saturated_waning = exp(dur_saturated_waning_non_centered * dur_saturated_waning_non_centered_sd + dur_saturated_waning_non_centered_mean)
-    prop_dur_mixed_waning = logistic(prop_dur_mixed_waning_non_centered * prop_dur_mixed_waning_non_centered_sd + prop_dur_mixed_waning_non_centered_mean)
+    dur_saturated_waning = exp(dur_saturated_waning_non_centered * dur_saturated_waning_non_centered_scale + dur_saturated_waning_non_centered_loc)
+    prop_dur_mixed_waning = logistic(prop_dur_mixed_waning_non_centered * prop_dur_mixed_waning_non_centered_scale + prop_dur_mixed_waning_non_centered_loc)
     dur_mixed_waning = dur_saturated_waning * prop_dur_mixed_waning
 
-    dur_waning_shape = exp(dur_waning_shape_non_centered * dur_waning_shape_non_centered_sd + dur_waning_shape_non_centered_mean)
+    dur_waning_shape = exp(dur_waning_shape_non_centered * dur_waning_shape_non_centered_scale + dur_waning_shape_non_centered_loc)
 
-    ρ_cases = logistic(ρ_cases_non_centered * ρ_cases_non_centered_sd + ρ_cases_non_centered_mean)
-    ρ_deaths = logistic(ρ_deaths_non_centered * ρ_deaths_non_centered_sd + ρ_deaths_non_centered_mean)
+    ρ_cases = logistic(ρ_cases_non_centered * ρ_cases_non_centered_scale + ρ_cases_non_centered_loc)
+    ρ_deaths = logistic(ρ_deaths_non_centered * ρ_deaths_non_centered_scale + ρ_deaths_non_centered_loc)
 
-    IHR = logistic(IHR_non_centered * IHR_non_centered_sd + IHR_non_centered_mean)
-    HICUR = logistic(HICUR_non_centered * HICUR_non_centered_sd + HICUR_non_centered_mean)
-    ICUDR = logistic(ICUDR_non_centered * ICUDR_non_centered_sd + ICUDR_non_centered_mean)
+    IHR = logistic(IHR_non_centered * IHR_non_centered_scale + IHR_non_centered_loc)
+    HICUR = logistic(HICUR_non_centered * HICUR_non_centered_scale + HICUR_non_centered_loc)
+    ICUDR = logistic(ICUDR_non_centered * ICUDR_non_centered_scale + ICUDR_non_centered_loc)
 
     ϕ_hospitalizations = ϕ_hospitalizations_non_centered^-2
     ϕ_new_cases = ϕ_new_cases_non_centered^-2
     ϕ_icu = ϕ_icu_non_centered^-2
     ϕ_new_deaths = ϕ_new_deaths_non_centered^-2
 
-    E_init_prop = logistic(E_init_prop_non_centered * E_init_prop_non_centered_sd + E_init_prop_non_centered_mean)
-    I_init_prop = logistic(I_init_prop_non_centered * I_init_prop_non_centered_sd + I_init_prop_non_centered_mean)
-    R_init_prop = logistic(R_init_prop_non_centered * R_init_prop_non_centered_sd + R_init_prop_non_centered_mean)
+    E_init_prop = logistic(E_init_prop_non_centered * E_init_prop_non_centered_scale + E_init_prop_non_centered_loc)
+    I_init_prop = logistic(I_init_prop_non_centered * I_init_prop_non_centered_scale + I_init_prop_non_centered_loc)
+    R_init_prop = logistic(R_init_prop_non_centered * R_init_prop_non_centered_scale + R_init_prop_non_centered_loc)
 
-    prop_variant_2_offset = exp(prop_variant_2_offset_non_centered * prop_variant_2_offset_non_centered_sd + prop_variant_2_offset_non_centered_mean)
+    prop_variant_2_offset = exp(prop_variant_2_offset_non_centered * prop_variant_2_offset_non_centered_scale + prop_variant_2_offset_non_centered_loc)
     prop_variant_2 = prop_variant_2_fn(vcat(0, param_change_times) .- prop_variant_2_offset)
 
     # Natural scale transformation
