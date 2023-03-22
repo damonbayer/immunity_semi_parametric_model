@@ -92,10 +92,37 @@ plot_forecast_metrics_comparison <- function(target_target_type) {
     ggtitle(glue("Forecast Metrics Comparison for {str_to_title(str_replace_all(target_target_type, '_', ' '))}"))
 }
 
-walk(all_target_types,
-     ~save_plot(filename = path("figures", glue("forecast_comparison_{.x}_plot"), ext = "pdf"),
-                plot = plot_forecast_comparison(.x),  ncol = 4, nrow = 3))
+forecast_comparison_plots <-
+  tibble(target_type = all_target_types,
+         file_path = path("figures", glue("forecast_comparison_{all_target_types}_plot"), ext = "pdf"),
+         figure = map(all_target_types, plot_forecast_comparison))
 
-walk(all_target_types,
-     ~save_plot(filename = path("figures", glue("forecast_metrics_comparison_{.x}_plot"), ext = "pdf"),
-                plot = plot_forecast_metrics_comparison(.x),  ncol = 4, nrow = 7, base_height = 2))
+forecast_metrics_comparison_plots <-
+  tibble(target_type = all_target_types,
+         file_path = path("figures", glue("forecast_metrics_comparison_{all_target_types}_plot"), ext = "pdf"),
+         figure = map(all_target_types, plot_forecast_metrics_comparison))
+
+
+walk2(forecast_comparison_plots$file_path, forecast_comparison_plots$figure,
+      ~save_plot(filename = .x,
+                plot = .y,
+                ncol = 4,
+                nrow = 3))
+
+walk2(forecast_metrics_comparison_plots$file_path, forecast_metrics_comparison_plots$figure,
+      ~save_plot(filename = .x,
+                 plot = .y,
+                 ncol = 4,
+                 nrow = 7,
+                 base_height = 2))
+
+
+Sys.setenv(PATH=paste(Sys.getenv("PATH"), "/opt/homebrew/bin/", sep=":"))
+
+str_c(forecast_comparison_plots$file_path, collapse = " ") %>% 
+  str_c(path("figures", "all_forecast_comparison_plots", ext = "pdf"), sep = " ") %>% 
+  system2("pdfunite", args = .)
+
+str_c(forecast_metrics_comparison_plots$file_path, collapse = " ") %>% 
+  str_c(path("figures", "all_forecast_metrics_comparison_plots", ext = "pdf"), sep = " ") %>% 
+  system2("pdfunite", args = .)
