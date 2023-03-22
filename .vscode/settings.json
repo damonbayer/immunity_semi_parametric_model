@@ -1,8 +1,6 @@
 {
-    "search.useIgnoreFiles": false,
-    "search.useParentIgnoreFiles": false,
-    "search.useGlobalIgnoreFiles": false,
     "files.exclude": {
         "**/.Rhistory": true
-    }
+    },
+    "python.terminal.activateEnvironment": false
 }
