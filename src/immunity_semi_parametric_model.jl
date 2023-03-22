@@ -1,16 +1,14 @@
 module immunity_semi_parametric_model
 using DynamicPPL
 using MCMCChains
+using AxisArrays
 using Distributions
 using ForwardDiff
 function NegativeBinomial2(μ, ϕ)
-    p = 1 / (1 + μ / ϕ)
-    r = ϕ
-    # r = clamp(r, nextfloat(zero(r)), prevfloat(typemax(r)))
-    # p = clamp(p, nextfloat(zero(p)), one(p))
+    r = clamp(ϕ, nextfloat(zero(ϕ)), prevfloat(typemax(ϕ)))
+    p = clamp(1 / (1 + μ / r), nextfloat(zero(μ)), one(μ))
     # println("μ: ", ForwardDiff.value(μ))
     # println("ϕ: ", ForwardDiff.value(ϕ))
-    # println("p: ", ForwardDiff.value(p))
     Distributions.NegativeBinomial(r, p)
 end
 export NegativeBinomial2
@@ -210,5 +208,52 @@ end
 function MCMCChains.Chains(ts::AbstractArray{<:NamedTuple})
     return MCMCChains.Chains(vectup2chainargs(ts)...)
 end
+
+function ChainsCustomOrder(c::Chains, sorted_var_names)
+    v = c[sorted_var_names].value
+    x, y, z = size(v)
+    unsorted = v.axes[2].val
+    sorted = collect(zip(indexin(sorted_var_names, unsorted), sorted_var_names))
+
+    new_axes = (v.axes[1], Axis{:var}([n for (_, n) in sorted]), v.axes[3])
+    new_v = copy(v.data)
+    for i in eachindex(sorted)
+        new_v[:, i, :] = v[:, sorted[i][1], :]
+    end
+
+    aa = AxisArray(new_v, new_axes...)
+
+    # Sort the name map too:
+    namemap = deepcopy(c.name_map)
+    namemap = (parameters=sorted_var_names,)
+    # for names in namemap
+    #     sort!(names, by=string, lt=lt)
+    # end
+
+    return Chains(aa, c.logevidence, namemap, c.info)
+end
+export ChainsCustomOrder
+
+"""
+augment_chains_with_forecast_samples
+"""
+function augment_chains_with_forecast_samples(original_chains::Chains, model, model_forecast, augment_type)::Chains
+    n_samples = size(original_chains)[1]
+    n_chains = size(original_chains)[3]
+    forecast_params_in_order = flattened_varnames_list(model_forecast)
+    new_forecast_params = setdiff(forecast_params_in_order, flattened_varnames_list(model))
+    n_new_forecast_params = length(new_forecast_params)
+
+    if augment_type == "zeros"
+        new_forecast_params_chain = setrange(Chains(zeros(n_samples, n_new_forecast_params, n_chains), new_forecast_params), original_chains.value.axes[1].val)
+    elseif augment_type == "randn"
+        new_forecast_params_chain = setrange(Chains(randn(n_samples, n_new_forecast_params, n_chains), new_forecast_params), original_chains.value.axes[1].val)
+    else
+        error("Invalid augment_type")
+    end
+
+    ChainsCustomOrder(hcat(original_chains, new_forecast_params_chain), forecast_params_in_order)
+end
+export augment_chains_with_forecast_samples
 
 end
