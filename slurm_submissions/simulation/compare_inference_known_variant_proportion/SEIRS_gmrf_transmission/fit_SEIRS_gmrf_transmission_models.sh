@@ -14,6 +14,6 @@
 
 module purge
 module load julia/1.8.5
-cd //dfs6/pub/bayerd/immunity_semi_parametric_model/
+cd //pub/bayerd/immunity_semi_parametric_model/
 
 julia --project --threads 4 scripts/simulation/compare_inference_known_variant_proportion/SEIRS_GMRF_transmission/fit_SEIRS_GMRF_transmission_model.jl $SLURM_ARRAY_TASK_ID

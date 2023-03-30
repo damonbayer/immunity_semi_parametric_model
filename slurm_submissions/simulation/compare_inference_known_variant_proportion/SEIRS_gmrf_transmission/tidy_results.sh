@@ -13,6 +13,6 @@
 
 module purge
 module load R
-cd //dfs6/pub/bayerd/immunity_semi_parametric_model
+cd //pub/bayerd/immunity_semi_parametric_model
 
 Rscript scripts/simulation/compare_inference_known_variant_proportion/SEIRS_GMRF_transmission/tidy_results.R $SLURM_ARRAY_TASK_ID
