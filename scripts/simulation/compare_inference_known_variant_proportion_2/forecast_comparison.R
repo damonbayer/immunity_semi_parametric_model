@@ -2,7 +2,8 @@ library(tidyverse)
 library(glue)
 library(fs)
 source("src/immunity_semi_parametric_model.R")
-context <- path("simulation", "compare_inference_known_variant_proportion_2")
+experiment_name <-  "compare_inference_known_variant_proportion_2"
+context <- path("simulation", experiment_name)
 all_models_dir <- path("results", context)
 sim_id <- 1
 
@@ -80,7 +81,8 @@ plot_forecast_comparison <- function(target_type) {
 plot_forecast_metrics_comparison <- function(target_target_type) {
   tidy_posterior_predictive_score %>%
     filter(model != "SEIRS",
-           target_type == target_target_type) %>% 
+           target_type == target_target_type,
+           weeks_ahead %in% c(1, 4, 8)) %>% 
     ggplot(aes(model, value, color = model)) +
     facet_grid(name ~ forecast_horizon, scales = "free_y") +
     geom_boxplot() +
@@ -94,12 +96,12 @@ plot_forecast_metrics_comparison <- function(target_target_type) {
 
 forecast_comparison_plots <-
   tibble(target_type = all_target_types,
-         file_path = path("figures", glue("forecast_comparison_{all_target_types}_plot"), ext = "pdf"),
+         file_path = path("figures", glue("forecast_comparison_2_{all_target_types}_plot"), ext = "pdf"),
          figure = map(all_target_types, plot_forecast_comparison))
 
 forecast_metrics_comparison_plots <-
   tibble(target_type = all_target_types,
-         file_path = path("figures", glue("forecast_metrics_comparison_{all_target_types}_plot"), ext = "pdf"),
+         file_path = path("figures", glue("forecast_metrics_comparison_2_{all_target_types}_plot"), ext = "pdf"),
          figure = map(all_target_types, plot_forecast_metrics_comparison))
 
 
@@ -120,9 +122,12 @@ walk2(forecast_metrics_comparison_plots$file_path, forecast_metrics_comparison_p
 Sys.setenv(PATH=paste(Sys.getenv("PATH"), "/opt/homebrew/bin/", sep=":"))
 
 str_c(forecast_comparison_plots$file_path, collapse = " ") %>% 
-  str_c(path("figures", "all_forecast_comparison_plots", ext = "pdf"), sep = " ") %>% 
+  str_c(path("figures", "all_forecast_comparison_plots_2", ext = "pdf"), sep = " ") %>% 
   system2("pdfunite", args = .)
 
 str_c(forecast_metrics_comparison_plots$file_path, collapse = " ") %>% 
-  str_c(path("figures", "all_forecast_metrics_comparison_plots", ext = "pdf"), sep = " ") %>% 
+  str_c(path("figures", "all_forecast_metrics_comparison_plots_2", ext = "pdf"), sep = " ") %>% 
   system2("pdfunite", args = .)
+
+file_delete(forecast_comparison_plots$file_path)
+file_delete(forecast_metrics_comparison_plots$file_path)

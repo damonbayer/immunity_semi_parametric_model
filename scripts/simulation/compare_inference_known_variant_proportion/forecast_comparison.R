@@ -126,3 +126,6 @@ str_c(forecast_comparison_plots$file_path, collapse = " ") %>%
 str_c(forecast_metrics_comparison_plots$file_path, collapse = " ") %>% 
   str_c(path("figures", "all_forecast_metrics_comparison_plots", ext = "pdf"), sep = " ") %>% 
   system2("pdfunite", args = .)
+
+file_delete(forecast_comparison_plots$file_path)
+file_delete(forecast_metrics_comparison_plots$file_path)
