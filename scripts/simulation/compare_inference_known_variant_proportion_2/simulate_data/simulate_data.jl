@@ -16,7 +16,7 @@ mkpath(datadir())
 init_index_to_report = 20
 obstimes = collect(1:1:(52*2))
 max_index_forecast = length(obstimes)
-max_index = max_index_forecast - 4
+max_index = max_index_forecast - 8
 
 include(simulationdir("simulate_data", "prior_constants_simulate_data.jl"))
 include(projectdir("src", "seirs_multivariant_log_ode_2.jl"))
