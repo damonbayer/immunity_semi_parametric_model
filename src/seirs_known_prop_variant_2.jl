@@ -24,7 +24,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     ρ_cases_non_centered ~ Normal()
     ρ_deaths_non_centered ~ Normal()
-a
+
     ϕ_hospitalizations_non_centered ~ truncated(Normal(), 0, Inf)
     ϕ_new_cases_non_centered ~ truncated(Normal(), 0, Inf)
     ϕ_icu_non_centered ~ truncated(Normal(), 0, Inf)
