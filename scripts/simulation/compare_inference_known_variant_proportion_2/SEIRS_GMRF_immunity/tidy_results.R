@@ -1,7 +1,7 @@
 target_max_t <- ifelse(length(commandArgs(trailingOnly=T)) == 0, 28, as.integer(commandArgs(trailingOnly=T[1])))
 source("src/immunity_semi_parametric_model.R")
 library(fs)
-context <- path("simulation", "compare_inference_known_variant_proportion")
+context <- path("simulation", "compare_inference_known_variant_proportion_2")
 model_name <- "SEIRS_GMRF_immunity"
 results_dir <- path("results", context, model_name)
 sim_id <- 1

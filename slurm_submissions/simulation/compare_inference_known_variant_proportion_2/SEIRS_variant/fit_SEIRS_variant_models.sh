@@ -9,7 +9,7 @@
 #SBATCH -o fit_SEIRS_variant_models-%A-%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
-#SBATCH --array=28-48
+#SBATCH --array=24-48
 #SBATCH --exclude=hpc3-15-29,hpc3-21-30,hpc3-21-23
 
 module purge
