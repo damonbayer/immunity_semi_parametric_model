@@ -4,6 +4,8 @@ using MCMCChains
 using AxisArrays
 using Distributions
 using ForwardDiff
+using Preferences
+
 function NegativeBinomial2(μ, ϕ)
     r = clamp(ϕ, nextfloat(zero(ϕ)), prevfloat(typemax(ϕ)))
     p = clamp(1 / (1 + μ / r), nextfloat(zero(μ)), one(μ))

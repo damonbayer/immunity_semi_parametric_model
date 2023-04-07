@@ -1,6 +1,6 @@
+authors = ["Damon Bayer <damon@damonbayer.com> and contributors"]
 name = "immunity_semi_parametric_model"
 uuid = "581757be-fa0d-46f8-9bd3-3fa93e217e5e"
-authors = ["Damon Bayer <damon@damonbayer.com> and contributors"]
 version = "0.1.0"
 
 [deps]
@@ -19,11 +19,13 @@ LineSearches = "d3d80556-e9d4-5f37-9878-2ab0fcc64255"
 LogExpFunctions = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
 MCMCChains = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TruncatedStacktraces = "781d530d-4396-4725-bb49-402e4bee1e77"
 
 [targets]
 test = ["Test"]
