@@ -71,9 +71,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
     I_init_prop = logistic(I_init_prop_non_centered * I_init_prop_non_centered_scale + I_init_prop_non_centered_loc)
     R_init_prop = logistic(R_init_prop_non_centered * R_init_prop_non_centered_scale + R_init_prop_non_centered_loc)
 
-
     prop_variant_2_offset = exp(prop_variant_2_offset_non_centered * prop_variant_2_offset_non_centered_scale + prop_variant_2_offset_non_centered_loc)
-    variant_ratio_at_logistic_growth_offset_time = exp(variant_ratio_at_logistic_growth_offset_time_non_centered * variant_ratio_at_logistic_growth_offset_time_non_centered_scale + variant_ratio_at_logistic_growth_offset_time_non_centered_loc)
+    variant_ratio_at_logistic_growth_offset_time = logistic(variant_ratio_at_logistic_growth_offset_time_non_centered * variant_ratio_at_logistic_growth_offset_time_non_centered_scale + variant_ratio_at_logistic_growth_offset_time_non_centered_loc)
     time_to_saturation = exp(time_to_saturation_non_centered * time_to_saturation_non_centered_scale + time_to_saturation_non_centered_loc)
 
     # Logistic growth transformation
@@ -93,7 +92,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     dur_waning_α₀ = log(dur_saturated_waning)
     dur_waning_α₁ = (log(dur_mixed_waning) - log(dur_saturated_waning)) * 4^dur_waning_shape
 
-    dur_waning_t = exp.(dur_waning_α₀ .+ dur_waning_α₁ .* (prop_variant_2_with_offset .* (1 .- prop_variant_2_with_offset)).^dur_waning_shape)
+    dur_waning_t = exp.(dur_waning_α₀ .+ dur_waning_α₁ .* (prop_variant_2_with_offset .* (1 .- prop_variant_2_with_offset)) .^ dur_waning_shape)
     κ_t = 1 ./ dur_waning_t
     κ_init = κ_t[1]
     κ_t_no_init = κ_t[2:end]
@@ -196,23 +195,23 @@ prob = ODEProblem{true}(seirs_ode_log!,
         new_seq_variant_2_mean=new_seq_variant_2_mean,
         icu_mean=icu_mean,
         new_deaths_mean=new_deaths_mean,
-        dur_saturated_waning = dur_saturated_waning,
-        prop_dur_mixed_waning = prop_dur_mixed_waning,
-        prop_variant_2_offset = prop_variant_2_offset,
-        dur_waning_α₀ = dur_waning_α₀,
-        dur_waning_α₁ = dur_waning_α₁,
-        dur_waning_shape = dur_waning_shape,
-        variant_ratio_at_logistic_growth_offset_time = variant_ratio_at_logistic_growth_offset_time,
-        time_to_saturation = time_to_saturation,
-        logistic_growth_intercept = logistic_growth_intercept,
-        logistic_growth_slope = logistic_growth_slope,
-        ρ_cases = ρ_cases,
-        ρ_deaths = ρ_deaths,
-        ρ_seq = ρ_seq,
-        ϕ_hospitalizations = ϕ_hospitalizations,
-        ϕ_new_cases = ϕ_new_cases,
-        ϕ_new_seq = ϕ_new_seq,
-        ϕ_icu = ϕ_icu,
-        ϕ_new_deaths = ϕ_new_deaths
+        dur_saturated_waning=dur_saturated_waning,
+        prop_dur_mixed_waning=prop_dur_mixed_waning,
+        prop_variant_2_offset=prop_variant_2_offset,
+        dur_waning_α₀=dur_waning_α₀,
+        dur_waning_α₁=dur_waning_α₁,
+        dur_waning_shape=dur_waning_shape,
+        variant_ratio_at_logistic_growth_offset_time=variant_ratio_at_logistic_growth_offset_time,
+        time_to_saturation=time_to_saturation,
+        logistic_growth_intercept=logistic_growth_intercept,
+        logistic_growth_slope=logistic_growth_slope,
+        ρ_cases=ρ_cases,
+        ρ_deaths=ρ_deaths,
+        ρ_seq=ρ_seq,
+        ϕ_hospitalizations=ϕ_hospitalizations,
+        ϕ_new_cases=ϕ_new_cases,
+        ϕ_new_seq=ϕ_new_seq,
+        ϕ_icu=ϕ_icu,
+        ϕ_new_deaths=ϕ_new_deaths
     )
 end
