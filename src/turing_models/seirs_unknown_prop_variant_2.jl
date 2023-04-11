@@ -167,15 +167,12 @@ prob = ODEProblem{true}(seirs_ode_log!,
     dur_waning_days_t = dur_waning_t .* time_interval_in_days
     dur_icu_days = dur_icu * time_interval_in_days
 
-    Rₜ_t = R₀ .* S_compartment[1:(end-1)] / popsize
-
     return (
         IHR=IHR,
         HICUR=HICUR,
         ICUDR=ICUDR,
         β=β,
         R₀=R₀,
-        Rₜ_t=Rₜ_t,
         dur_latent_days=dur_latent_days,
         dur_infectious_days=dur_infectious_days,
         dur_hospitalized_days=dur_hospitalized_days,
