@@ -21,8 +21,8 @@ sim_id = 1
 include(simulationdir("load_simulated_data.jl"))
 
 include(simulationdir("SEIRS_known_variant", "prior_constants_SEIRS_known_variant_model.jl"))
-include(projectdir("src", "seirs_log_ode.jl"))
-include(projectdir("src", "seirs_known_prop_variant_2.jl"))
+include(projectdir("src", "ode_models", "seirs_log_ode.jl"))
+include(projectdir("src", "turing_models", "seirs_known_prop_variant_2.jl"))
 
 model_sample = seirs_known_prop_variant_2(prob, prop_variant_2_fn, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, obstimes, param_change_times, Tsit5(), 1e-11, 1e-8)
 model_optimization = seirs_known_prop_variant_2(prob, prop_variant_2_fn, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, obstimes, param_change_times, Tsit5(), 1e-13, 1e-10)

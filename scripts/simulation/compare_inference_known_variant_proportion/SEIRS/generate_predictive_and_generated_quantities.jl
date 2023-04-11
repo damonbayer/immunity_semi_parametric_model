@@ -21,8 +21,8 @@ sim_id = 1
 include(simulationdir("load_simulated_data.jl"))
 
 include(simulationdir("SEIRS", "prior_constants_SEIRS_model.jl"))
-include(projectdir("src", "seirs_log_ode.jl"))
-include(projectdir("src", "seirs.jl"))
+include(projectdir("src", "ode_models", "seirs_log_ode.jl"))
+include(projectdir("src", "turing_models", "seirs.jl"))
 
 model_sample = seirs(prob, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, obstimes, Tsit5(), 1e-11, 1e-8)
 model_optimization = seirs(prob, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, obstimes, Tsit5(), 1e-13, 1e-10)

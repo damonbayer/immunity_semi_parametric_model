@@ -19,8 +19,8 @@ max_index_forecast = length(obstimes)
 max_index = max_index_forecast - 4
 
 include(simulationdir("simulate_data", "prior_constants_simulate_data.jl"))
-include(projectdir("src", "seirs_multivariant_log_ode.jl"))
-include(projectdir("src", "seirs_multivariant.jl"))
+include(projectdir("src", "ode_models", "seirs_multivariant_log_ode.jl"))
+include(projectdir("src", "turing_models", "seirs_multivariant.jl"))
 
 data_zero_cases = repeat([0], max_index_forecast)
 data_zero_hospitalizations = repeat([0], max_index_forecast)

@@ -19,8 +19,8 @@ sim_id = 1
 include(simulationdir("load_simulated_data.jl"))
 
 include(simulationdir("SEIRS_unknown_variant", "prior_constants_SEIRS_unknown_variant_model.jl"))
-include(projectdir("src", "seirs_log_ode.jl"))
-include(projectdir("src", "seirs_unknown_prop_variant_2.jl"))
+include(projectdir("src", "ode_models", "seirs_log_ode.jl"))
+include(projectdir("src", "turing_models", "seirs_unknown_prop_variant_2.jl"))
 
 model_sample = seirs_unknown_prop_variant_2(prob, 20, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq_variant_1, data_new_seq_variant_2, obstimes, param_change_times, Tsit5(), 1e-11, 1e-8);
 

@@ -1,12 +1,3 @@
-# TODO
-# add parameter for logistic_growth_time_offset
-# code linear regression
-# code priors for intercept and slope
-# add parameters for overdispersion of sequences
-# add likelihood for sequences
-# parameterize in terms of variant_ratio_at_logistic_growth_offset_time and time_to_saturation
-# save new parameters
-
 prob = ODEProblem{true}(seirs_ode_log!,
     zeros(8),
     (0.0, obstimes[end]),

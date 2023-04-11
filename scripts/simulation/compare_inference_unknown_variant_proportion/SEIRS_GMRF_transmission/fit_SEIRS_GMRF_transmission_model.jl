@@ -21,8 +21,8 @@ sim_id = 1
 include(simulationdir("load_simulated_data.jl"))
 
 include(simulationdir("SEIRS_GMRF_transmission", "prior_constants_SEIRS_GMRF_transmission_model.jl"))
-include(projectdir("src", "seirs_log_ode.jl"))
-include(projectdir("src", "seirs_gmrf_transmission.jl"))
+include(projectdir("src", "ode_models", "seirs_log_ode.jl"))
+include(projectdir("src", "turing_models", "seirs_gmrf_transmission.jl"))
 
 model_optimization = seirs_gmrf_transmission(prob, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, obstimes, param_change_times, Tsit5(), 1e-13, 1e-10)
 model_sample = seirs_gmrf_transmission(prob, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, obstimes, param_change_times, Tsit5(), 1e-11, 1e-8)
