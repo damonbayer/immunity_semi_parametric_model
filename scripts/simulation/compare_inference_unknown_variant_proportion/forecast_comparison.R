@@ -33,7 +33,7 @@ true_generated_quantities <-
   path("data", context, "true_generated_quantities", ext = "csv") %>% 
   read_csv_as_draws() %>%
   tidy_generated_quantities() %>% 
-  select(name, time, value)
+  distinct(name, time, value)
 
 results_tbl <- 
   dir_ls(all_models_dir, recurse = 2, type = "file") %>% 
@@ -89,7 +89,7 @@ plot_forecast_comparison <- function(target_type) {
     tidy_predictive_tbl %>% 
     filter(distribution == "posterior",
            name == target_type,
-           weeks_ahead %in% c(0, 4, 8))
+           weeks_ahead %in% c(0, 2, 4, 8))
   
   tmp_dat_tidy <-
     dat_tidy %>% 
@@ -279,11 +279,9 @@ non_single_plot_tbl_names %>%
     str_c(uncollected_plot_paths, collapse = " ") %>% 
       str_c(collected_plot_path, sep = " ") %>% 
       system2("pdfunite", args = .)
-    
-    file_delete(uncollected_plot_paths)
   })
 
-merge_single_plots <- function(single_plot_tbl_name) {
+merge_single_plots_fn <- function(single_plot_tbl_name) {
   single_plot_tbl <- get(single_plot_tbl_name)
   single_plot_tbl %>% 
     group_by(target_model_name) %>% 
@@ -295,8 +293,9 @@ merge_single_plots <- function(single_plot_tbl_name) {
         str_c(collected_plot_path, sep = " ") %>%
         system2("pdfunite", args = .)
     })
-  
-  file_delete(single_plot_tbl$file_path)
 }
 
-walk(single_plot_tbl_names, merge_single_plots)
+walk(single_plot_tbl_names, merge_single_plots_fn)
+
+# Delete unmerged figures -------------------------------------------------
+walk(all_plot_tbl_names, ~file_delete(get(.x)$file_path))
