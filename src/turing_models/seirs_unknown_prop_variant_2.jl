@@ -79,8 +79,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
     logistic_growth_intercept = log(variant_ratio_at_logistic_growth_offset_time)
     logistic_growth_slope = (logit(0.99) - logit(0.01)) / time_to_saturation
 
-    prop_variant_2 = logistic.(logistic_growth_intercept .+ logistic_growth_slope .* (vcat(0, param_change_times) .- logistic_growth_time_offset))
-    prop_variant_2_with_offset = logistic.(logistic_growth_intercept .+ logistic_growth_slope .* (vcat(0, param_change_times) .- logistic_growth_time_offset .- prop_variant_2_offset))
+    prop_variant_2 = logistic.(logistic_growth_intercept .+ logistic_growth_slope .* (vcat(0, obstimes) .- logistic_growth_time_offset))
+    prop_variant_2_with_offset = logistic.(logistic_growth_intercept .+ logistic_growth_slope .* (vcat(0, obstimes) .- logistic_growth_time_offset .- prop_variant_2_offset))
 
     # Natural scale transformation
     γ = 1 / dur_latent
@@ -137,8 +137,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
     hospitalizations_mean = sol_hospitalizations
     new_cases_mean = sol_new_cases .* ρ_cases
     new_seq_mean = new_cases_mean .* ρ_seq
-    new_seq_variant_1_mean = new_seq_mean .* (1 .- prop_variant_2)
-    new_seq_variant_2_mean = new_seq_mean .* prop_variant_2
+    new_seq_variant_1_mean = new_seq_mean .* (1 .- prop_variant_2[2:end])
+    new_seq_variant_2_mean = new_seq_mean .* prop_variant_2[2:end]
     icu_mean = sol_icu
     new_deaths_mean = sol_new_deaths .* ρ_deaths
 

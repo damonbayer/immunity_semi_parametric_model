@@ -66,7 +66,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     R_init_prop = logistic(R_init_prop_non_centered * R_init_prop_non_centered_scale + R_init_prop_non_centered_loc)
 
     prop_variant_2_offset = exp(prop_variant_2_offset_non_centered * prop_variant_2_offset_non_centered_scale + prop_variant_2_offset_non_centered_loc)
-    prop_variant_2 = prop_variant_2_fn(vcat(0, param_change_times) .- prop_variant_2_offset)
+    prop_variant_2_with_offset = prop_variant_2_fn(vcat(0, param_change_times) .- prop_variant_2_offset)
 
     # Natural scale transformation
     γ = 1 / dur_latent
@@ -78,7 +78,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     dur_waning_α₀ = log(dur_saturated_waning)
     dur_waning_α₁ = (log(dur_mixed_waning) - log(dur_saturated_waning)) * 4^dur_waning_shape
 
-    dur_waning_t = exp.(dur_waning_α₀ .+ dur_waning_α₁ .* (prop_variant_2 .* (1 .- prop_variant_2)).^dur_waning_shape)
+    dur_waning_t = exp.(dur_waning_α₀ .+ dur_waning_α₁ .* (prop_variant_2_with_offset .* (1 .- prop_variant_2_with_offset)).^dur_waning_shape)
     κ_t = 1 ./ dur_waning_t
     κ_init = κ_t[1]
     κ_t_no_init = κ_t[2:end]
