@@ -1,13 +1,16 @@
 library(tidyverse)
 library(glue)
 library(fs)
+library(furrr)
 source("src/immunity_semi_parametric_model.R")
+
+options("parallelly.fork.enable" = TRUE)
+plan(multicore)
+
 experiment_name <-  "compare_inference_unknown_variant_proportion"
 context <- path("simulation", experiment_name)
 all_models_dir <- path("results", context)
 sim_id <- 1
-
-
 
 # Loading Data ------------------------------------------------------------
 dat_tidy <-
@@ -45,7 +48,7 @@ results_tbl <-
 tidy_predictive_tbl <-
   results_tbl %>% 
   filter(result_type == "predictive") %>% 
-  mutate(tidy_predictive = map(file_path, read_csv)) %>% 
+  mutate(tidy_predictive = future_map(file_path, read_csv)) %>% 
   unnest(tidy_predictive) %>% 
   select(-result_type, -file_path) %>% 
   mutate(name = str_remove(name, "data+_"))
@@ -53,7 +56,7 @@ tidy_predictive_tbl <-
 tidy_generated_quantities_tbl <- 
   results_tbl %>% 
   filter(result_type == "generated_quantities") %>% 
-  mutate(tidy_generated_quantities = map(file_path, read_csv)) %>% 
+  mutate(tidy_generated_quantities = future_map(file_path, read_csv)) %>% 
   unnest(tidy_generated_quantities) %>% 
   select(-result_type, -file_path) %>% 
   mutate(name = str_remove(name, "data+_"))
@@ -62,7 +65,7 @@ tidy_posterior_predictive_score_tbl <-
   results_tbl %>% 
   filter(result_type == "predictive_score") %>% 
   select(-max_t) %>% 
-  mutate(tidy_predictive_score = map(file_path, read_csv)) %>% 
+  mutate(tidy_predictive_score = future_map(file_path, read_csv)) %>% 
   unnest(tidy_predictive_score) %>% 
   select(-c(model_name, result_type, file_path, time, max_t)) %>% 
   pivot_longer(cols = -c(distribution, model, target_type, weeks_ahead)) %>% 
@@ -192,7 +195,7 @@ plot_single_generated_quantities <- function(target_model_name, target_max_t) {
 # Create Figures ----------------------------------------------------------
 augment_figure_tbl <- function(figure_tbl) {
   figure_tbl %>% 
-    mutate(figure_dims = map(figure, gg_facet_dims)) %>% 
+    mutate(figure_dims = future_map(figure, gg_facet_dims)) %>% 
     unnest_wider(figure_dims) %>% 
     rename(n_row = ROW, n_col = COL) %>% 
     select(file_path, figure, n_col, n_row, everything())
@@ -202,26 +205,26 @@ augment_figure_tbl <- function(figure_tbl) {
 forecast_comparison_plots <-
   tibble(target_type = all_target_types) %>% 
   mutate(file_path = path("figures", experiment_name, glue("forecast_comparison_{target_type}_plot"), ext = "pdf"),
-         figure = map(target_type, plot_forecast_comparison)) %>% 
+         figure = future_map(target_type, plot_forecast_comparison)) %>% 
   augment_figure_tbl()
 
 forecast_metrics_comparison_plots <- 
   tibble(target_type = all_target_types) %>% 
   mutate(file_path = path("figures", experiment_name, glue("forecast_metrics_comparison_{target_type}_plot"), ext = "pdf"),
-         figure = map(target_type, plot_forecast_metrics_comparison)) %>% 
+         figure = future_map(target_type, plot_forecast_metrics_comparison)) %>% 
   augment_figure_tbl()
 
 scalar_generated_quantities_by_forecast_time_plots <- 
   tibble(target_model_name = all_model_names) %>% 
   mutate(file_path = path("figures", experiment_name, glue("scalar_generated_quantities_by_forecast_time_{target_model_name}_plot"), ext = "pdf"),
-         figure = map(target_model_name, plot_scalar_generated_quantities_by_forecast_time)) %>% 
+         figure = future_map(target_model_name, plot_scalar_generated_quantities_by_forecast_time)) %>% 
   augment_figure_tbl()
 
 vector_generated_quantities_by_forecast_time_plots <- 
   tibble(target_model_name = all_model_names) %>% 
   mutate(file_path = path("figures", experiment_name, glue("vector_generated_quantities_by_forecast_time_{target_model_name}_plot"), ext = "pdf"),
-         figure = map(target_model_name, plot_vector_generated_quantities_by_forecast_time)) %>% 
-  mutate(figure_dims = map(figure, gg_facet_dims)) %>% 
+         figure = future_map(target_model_name, plot_vector_generated_quantities_by_forecast_time)) %>% 
+  mutate(figure_dims = future_map(figure, gg_facet_dims)) %>% 
   augment_figure_tbl()
 
 single_generated_quantities_plots <- 
@@ -248,7 +251,7 @@ single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "sing
 non_single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "single", negate = T)]
 
 # Save all figures
-walk(all_plot_tbl_names, ~pwalk(as.list(get(.x)), ~save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4)))
+future_walk(all_plot_tbl_names, ~pwalk(as.list(get(.x)), ~save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, device = cairo_pdf)))
 
 # Merge all figures
 Sys.setenv(PATH=paste(Sys.getenv("PATH"), "/opt/homebrew/bin/", sep=":"))
