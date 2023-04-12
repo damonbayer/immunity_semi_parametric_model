@@ -29,6 +29,12 @@ dat_tidy <-
   ) %>% 
   mutate(name = str_remove(name, "data+_"))
 
+true_generated_quantities <- 
+  path("data", context, "true_generated_quantities", ext = "csv") %>% 
+  read_csv_as_draws() %>%
+  tidy_generated_quantities() %>% 
+  select(name, time, value)
+
 results_tbl <- 
   dir_ls(all_models_dir, recurse = 2, type = "file") %>% 
   enframe(name = NULL, value = "file_path") %>% 
@@ -157,10 +163,17 @@ plot_single_posterior_predictive <- function(target_model_name, target_max_t) {
     tidy_predictive_tbl %>% 
     filter(distribution == "posterior",
            model_name == target_model_name,
-           max_t == target_max_t)
+           max_t == target_max_t) %>% 
+    bind_rows(tidy_generated_quantities_tbl %>% 
+                filter(distribution == "posterior",
+                       model_name == target_model_name,
+                       max_t == target_max_t,
+                       name == "prop_variant_2"))
   
   tmp_dat_tidy <-
     dat_tidy %>% 
+    bind_rows(true_generated_quantities %>% 
+                filter(name == "prop_variant_2")) %>% 
     filter(time <= max(tmp_tidy_posterior_predictive$time)) %>% 
     filter(name %in% unique(tmp_tidy_posterior_predictive$name)) %>% 
     mutate(data_type = if_else(time <= target_max_t, "observed", "future"))
@@ -285,7 +298,5 @@ merge_single_plots <- function(single_plot_tbl_name) {
   
   file_delete(single_plot_tbl$file_path)
 }
-
-get(single_plot_tbl_names[1])$file_path
 
 walk(single_plot_tbl_names, merge_single_plots)

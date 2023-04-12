@@ -230,6 +230,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
         ϕ_new_cases=ϕ_new_cases,
         ϕ_new_seq=ϕ_new_seq,
         ϕ_icu=ϕ_icu,
-        ϕ_new_deaths=ϕ_new_deaths
+        ϕ_new_deaths=ϕ_new_deaths,
+        prop_variant_2=prop_variant_2
     )
 end
