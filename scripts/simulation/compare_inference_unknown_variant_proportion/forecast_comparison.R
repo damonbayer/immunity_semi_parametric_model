@@ -7,6 +7,9 @@ context <- path("simulation", experiment_name)
 all_models_dir <- path("results", context)
 sim_id <- 1
 
+
+
+# Loading Data ------------------------------------------------------------
 dat_tidy <-
   path("data", context, "simulated_data", ext = "csv") %>%
   read_csv_as_draws() %>%
@@ -23,59 +26,60 @@ dat_tidy <-
   ) %>% 
   mutate(name = str_remove(name, "data+_"))
 
-tidy_posterior_predictive <-
-  dir_ls(all_models_dir, recurse = 2) %>% 
+results_tbl <- 
+  dir_ls(all_models_dir, recurse = 2, type = "file") %>% 
   enframe(name = NULL, value = "file_path") %>% 
-  mutate(file_name = file_path %>% 
-           path_file() %>% 
-           path_ext_remove()) %>% 
-  filter(str_detect(file_name, "^tidy_posterior_predictive_max_t=\\d+$")) %>% 
-  mutate(model_name = map_chr(path_split(file_path), ~pluck(.x, 4)), .before = 1) %>% 
+  filter(path_ext(file_path) == "csv") %>% 
+  mutate(split_path = path_split(file_path)) %>% 
+  mutate(file_name = file_path %>% path_file() %>% path_ext_remove()) %>% 
+  mutate(model_name = map_chr(split_path, ~pluck(.x, 4))) %>% 
+  mutate(result_type = map_chr(split_path, ~pluck(.x, 5))) %>% 
+  filter(str_starts(result_type, "tidy_") | str_detect(result_type, "score")) %>%
+  mutate(distribution = str_extract(result_type, "prior|posterior")) %>% 
+  mutate(result_type = str_remove(result_type, ".*(posterior|prior)_")) %>% 
   mutate(max_t = file_name %>% 
-           str_extract("(?<=^tidy_posterior_predictive_max_t=)\\d+") %>% 
+           str_extract("(?<=max_t=)\\d+") %>% 
            as.integer()) %>% 
-  mutate(tidy_posterior_predictive = map(file_path, read_csv)) %>% 
-  unnest(tidy_posterior_predictive) %>% 
-  select(-c(file_path, file_name)) %>% 
+  select(model_name, result_type, distribution, max_t, file_path)
+
+tidy_predictive_tbl <-
+  results_tbl %>% 
+  filter(result_type == "predictive") %>% 
+  mutate(tidy_predictive = map(file_path, read_csv)) %>% 
+  unnest(tidy_predictive) %>% 
+  select(-result_type, -file_path) %>% 
   mutate(name = str_remove(name, "data+_"))
 
-tidy_posterior_predictive_score <- 
-  dir_ls(all_models_dir, recurse = 2) %>% 
-  enframe(name = NULL, value = "file_path") %>% 
-  filter(file_path %>% 
-           path_file() %>% 
-           path_ext_remove() %>% 
-           str_detect("^posterior_predictive_score_max_t=\\d+$")) %>% 
-  mutate(posterior_predictive_score = map(file_path, read_csv)) %>% 
-  select(-file_path) %>% 
-  unnest(posterior_predictive_score) %>% 
-  select(-time, -max_t) %>% 
-  pivot_longer(cols = -c(model, target_type, weeks_ahead)) %>% 
+tidy_generated_quantities_tbl <- 
+  results_tbl %>% 
+  filter(result_type == "generated_quantities") %>% 
+  mutate(tidy_generated_quantities = map(file_path, read_csv)) %>% 
+  unnest(tidy_generated_quantities) %>% 
+  select(-result_type, -file_path) %>% 
+  mutate(name = str_remove(name, "data+_"))
+
+tidy_posterior_predictive_score_tbl <- 
+  results_tbl %>% 
+  filter(result_type == "predictive_score") %>% 
+  select(-max_t) %>% 
+  mutate(tidy_predictive_score = map(file_path, read_csv)) %>% 
+  unnest(tidy_predictive_score) %>% 
+  select(-c(model_name, result_type, file_path, time, max_t)) %>% 
+  pivot_longer(cols = -c(distribution, model, target_type, weeks_ahead)) %>% 
   mutate(target_type = str_remove(target_type, "data+_")) %>% 
   mutate(forecast_horizon = str_c(weeks_ahead, " Week Horizon"))
 
-tidy_posterior_generated_quantities <-
-  dir_ls(all_models_dir, recurse = 2) %>% 
-  enframe(name = NULL, value = "file_path") %>% 
-  mutate(file_name = file_path %>% 
-           path_file() %>% 
-           path_ext_remove()) %>% 
-  filter(str_detect(file_name, "^tidy_posterior_generated_quantities_max_t=\\d+$")) %>% 
-  mutate(model_name = map_chr(path_split(file_path), ~pluck(.x, 4)), .before = 1) %>% 
-  mutate(max_t = file_name %>% 
-           str_extract("(?<=^tidy_posterior_generated_quantities_max_t=)\\d+") %>% 
-           as.integer()) %>% 
-  mutate(tidy_generated_quantities = map(file_path, read_csv)) %>% 
-  unnest(tidy_generated_quantities) %>% 
-  select(-c(file_path, file_name)) 
+all_target_types <- unique(tidy_predictive_tbl$name)
+all_model_names <- unique(tidy_generated_quantities_tbl$model_name)
 
-all_target_types <- unique(tidy_posterior_predictive_score$target_type)
-all_model_names <- unique(tidy_posterior_generated_quantities$model_name)
+
+# Plot functions ----------------------------------------------------------
 
 plot_forecast_comparison <- function(target_type) {
   tmp_tidy_posterior_predictive <- 
-    tidy_posterior_predictive %>% 
-    filter(name == target_type,
+    tidy_predictive_tbl %>% 
+    filter(distribution == "posterior",
+           name == target_type,
            weeks_ahead %in% c(0, 4, 8))
   
   tmp_dat_tidy <-
@@ -102,13 +106,13 @@ plot_forecast_comparison <- function(target_type) {
 }
 
 plot_forecast_metrics_comparison <- function(target_target_type) {
-  tidy_posterior_predictive_score %>%
-    filter(model != "SEIRS",
-           target_type == target_target_type,
+  tidy_posterior_predictive_score_tbl %>% 
+    filter(target_type == target_target_type,
            weeks_ahead %in% c(1, 4, 8)) %>% 
     ggplot(aes(model, value, color = model)) +
     facet_grid(name ~ forecast_horizon, scales = "free_y") +
     geom_boxplot() +
+    geom_hline(yintercept = 0) +
     scale_y_continuous(name = "Value", labels = comma) +
     scale_x_discrete(name = "Model") +
     theme(legend.position = "bottom",
@@ -118,21 +122,21 @@ plot_forecast_metrics_comparison <- function(target_target_type) {
 }
 
 plot_scalar_generated_quantities_by_forecast_time <- function(target_model_name) {
-  tidy_posterior_generated_quantities %>% 
-    filter(is.na(time)) %>% 
+  tidy_generated_quantities_tbl %>% 
+    filter(is.na(time), .width == 0.8) %>% 
     filter(model_name == target_model_name) %>% 
-    ggplot(aes(max_t, value, ymin = .lower, ymax = .upper)) +
+    ggplot(aes(max_t, value, ymin = .lower, ymax = .upper, color = distribution)) +
     facet_wrap(~name, scales = "free_y") +
-    geom_interval() +
-    my_theme +
+    geom_interval(alpha = 0.5) +
     scale_y_continuous("Value") +
     scale_x_continuous("Forecast Time") +
     ggtitle(glue("Posterior Parameter Distirbutions by Forecast time for {target_model_name}"))
 }
 
 plot_vector_generated_quantities_by_forecast_time <- function(target_model_name) {
-  tidy_posterior_generated_quantities %>% 
-    filter(!is.na(time)) %>% 
+  tidy_generated_quantities_tbl %>% 
+    filter(!is.na(time),
+           distribution == "posterior") %>% 
     filter(model_name == target_model_name) %>% 
     distinct(name, time, value, max_t) %>% 
     ggplot(aes(time, value, color = max_t, group = max_t)) +
@@ -145,80 +149,136 @@ plot_vector_generated_quantities_by_forecast_time <- function(target_model_name)
     theme(legend.position = "bottom")
 }
 
+plot_single_posterior_predictive <- function(target_model_name, target_max_t) {
+  tmp_tidy_posterior_predictive <- 
+    tidy_predictive_tbl %>% 
+    filter(distribution == "posterior",
+           model_name == target_model_name,
+           max_t == target_max_t)
+  
+  tmp_dat_tidy <-
+    dat_tidy %>% 
+    filter(time <= max(tmp_tidy_posterior_predictive$time)) %>% 
+    filter(name %in% unique(tmp_tidy_posterior_predictive$name)) %>% 
+    mutate(data_type = if_else(time <= target_max_t, "observed", "future"))
+  
+  ggplot(mapping = aes(time, value)) +
+    facet_wrap(.~name, scales = "free_y") +
+    geom_lineribbon(data = tmp_tidy_posterior_predictive,
+                    mapping = aes(ymin = .lower, ymax = .upper), step = "mid") +
+    geom_point(data = tmp_dat_tidy, mapping = aes(shape = data_type)) +
+    geom_vline(xintercept = target_max_t, linetype = "dashed") +
+    my_theme +
+    scale_shape_discrete(name = "Data Type", labels = str_to_title) +
+    scale_y_continuous(labels = comma) +
+    ggtitle(glue("{target_model_name} Posterior Predictive at t = {target_max_t}"))
+}
+
+plot_single_generated_quantities <- function(target_model_name, target_max_t) {
+  tidy_generated_quantities_tbl %>% 
+    filter(!is.na(time),
+           model_name == target_model_name,
+           max_t == target_max_t) %>% 
+    ggplot(mapping = aes(time, value, ymin = .lower, ymax = .upper, color = distribution, fill = distribution, group = .width)) +
+    facet_wrap(.~name, scales = "free_y") +
+    geom_lineribbon(alpha = 0.25) +
+    geom_vline(xintercept = target_max_t, linetype = "dashed") +
+    # my_theme +
+    scale_y_continuous(labels = comma) +
+    ggtitle(glue("{target_model_name} Generated Quantities at t = {target_max_t}"))
+}
 
 
-# Make figures ------------------------------------------------------------
+# Create Figures ----------------------------------------------------------
+augment_figure_tbl <- function(figure_tbl) {
+  figure_tbl %>% 
+    mutate(figure_dims = map(figure, gg_facet_dims)) %>% 
+    unnest_wider(figure_dims) %>% 
+    rename(n_row = ROW, n_col = COL) %>% 
+    select(file_path, figure, n_col, n_row, everything())
+}
+
+
 forecast_comparison_plots <-
-  tibble(target_type = all_target_types,
-         file_path = path("figures", glue("forecast_comparison_2_{all_target_types}_plot"), ext = "pdf"),
-         figure = map(all_target_types, plot_forecast_comparison))
+  tibble(target_type = all_target_types) %>% 
+  mutate(file_path = path("figures", experiment_name, glue("forecast_comparison_{target_type}_plot"), ext = "pdf"),
+         figure = map(target_type, plot_forecast_comparison)) %>% 
+  augment_figure_tbl()
 
-forecast_metrics_comparison_plots <-
-  tibble(target_type = all_target_types,
-         file_path = path("figures", glue("forecast_metrics_comparison_2_{all_target_types}_plot"), ext = "pdf"),
-         figure = map(all_target_types, plot_forecast_metrics_comparison))
+forecast_metrics_comparison_plots <- 
+  tibble(target_type = all_target_types) %>% 
+  mutate(file_path = path("figures", experiment_name, glue("forecast_metrics_comparison_{target_type}_plot"), ext = "pdf"),
+         figure = map(target_type, plot_forecast_metrics_comparison)) %>% 
+  augment_figure_tbl()
 
-scalar_generated_quantities_by_forecast_time_plots <-
-  tibble(target_type = all_model_names,
-         file_path = path("figures", glue("scalar_generated_quantities_by_forecast_time_{all_model_names}_plot"), ext = "pdf"),
-         figure = map(all_model_names, plot_scalar_generated_quantities_by_forecast_time))
+scalar_generated_quantities_by_forecast_time_plots <- 
+  tibble(target_model_name = all_model_names) %>% 
+  mutate(file_path = path("figures", experiment_name, glue("scalar_generated_quantities_by_forecast_time_{target_model_name}_plot"), ext = "pdf"),
+         figure = map(target_model_name, plot_scalar_generated_quantities_by_forecast_time)) %>% 
+  augment_figure_tbl()
 
-vector_generated_quantities_by_forecast_time_plots <-
-  tibble(target_type = all_model_names,
-         file_path = path("figures", glue("scalar_generated_quantities_by_forecast_time_{all_model_names}_plot"), ext = "pdf"),
-         figure = map(all_model_names, plot_vector_generated_quantities_by_forecast_time))
+vector_generated_quantities_by_forecast_time_plots <- 
+  tibble(target_model_name = all_model_names) %>% 
+  mutate(file_path = path("figures", experiment_name, glue("vector_generated_quantities_by_forecast_time_{target_model_name}_plot"), ext = "pdf"),
+         figure = map(target_model_name, plot_vector_generated_quantities_by_forecast_time)) %>% 
+  mutate(figure_dims = map(figure, gg_facet_dims)) %>% 
+  augment_figure_tbl()
+
+single_generated_quantities_plots <- 
+  tidy_predictive_tbl %>% 
+  distinct(model_name, max_t) %>% 
+  rename_with(~str_c("target_", .x)) %>% 
+  mutate(file_path = path("figures", experiment_name, glue("single_generated_quantities_{target_model_name}_{target_max_t}_plot"), ext = "pdf"),
+         figure = map2(target_model_name, target_max_t, ~plot_single_generated_quantities(target_model_name = .x, target_max_t = .y))) %>% 
+  augment_figure_tbl()
+
+single_posterior_predictive_plots <- 
+  tidy_predictive_tbl %>% 
+  distinct(model_name, max_t) %>% 
+  rename_with(~str_c("target_", .x)) %>% 
+  mutate(file_path = path("figures", experiment_name, glue("single_posterior_predictive_{target_model_name}_{target_max_t}_plot"), ext = "pdf"),
+         figure = map2(target_model_name, target_max_t, ~plot_single_posterior_predictive(target_model_name = .x, target_max_t = .y))) %>% 
+  augment_figure_tbl()
 
 
 # Save Figures ------------------------------------------------------------
-# rewrite to save in experiment folder
-walk2(forecast_comparison_plots$file_path, forecast_comparison_plots$figure,
-      ~save_plot(filename = .x,
-                plot = .y,
-                ncol = 4,
-                nrow = 3))
+dir_create(path("figures", experiment_name))
+all_plot_tbl_names <- ls()[str_ends(ls(), "_plots")]
+single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "single", negate = F)]
+non_single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "single", negate = T)]
 
-walk2(forecast_metrics_comparison_plots$file_path, forecast_metrics_comparison_plots$figure,
-      ~save_plot(filename = .x,
-                 plot = .y,
-                 ncol = 4,
-                 nrow = 7,
-                 base_height = 2))
+# Save all figures
+walk(all_plot_tbl_names, ~pwalk(as.list(get(.x)), ~save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4)))
 
-walk2(scalar_generated_quantities_by_forecast_time_plots$file_path, scalar_generated_quantities_by_forecast_time_plots$figure,
-      ~save_plot(filename = .x,
-                 plot = .y,
-                 ncol = 5,
-                 nrow = 5,
-                 device = cairo_pdf))
-
-walk2(vector_generated_quantities_by_forecast_time_plots$file_path, vector_generated_quantities_by_forecast_time_plots$figure,
-      ~save_plot(filename = .x,
-                 plot = .y,
-                 ncol = 4,
-                 nrow = 4,
-                 device = cairo_pdf))
-
-# Combine Figures ---------------------------------------------------------
+# Merge all figures
 Sys.setenv(PATH=paste(Sys.getenv("PATH"), "/opt/homebrew/bin/", sep=":"))
 
-str_c(forecast_comparison_plots$file_path, collapse = " ") %>% 
-  str_c(path("figures", str_c("all_forecast_comparison_plots_", experiment_name), ext = "pdf"), sep = " ") %>% 
-  system2("pdfunite", args = .)
+non_single_plot_tbl_names %>% 
+  walk(~{
+    uncollected_plot_paths <- get(.x)$file_path
+    collected_plot_path <- path("figures", experiment_name, str_c("all_", .x), ext = "pdf")
+    
+    str_c(uncollected_plot_paths, collapse = " ") %>% 
+      str_c(collected_plot_path, sep = " ") %>% 
+      system2("pdfunite", args = .)
+    
+    file_delete(uncollected_plot_paths)
+  })
 
-str_c(forecast_metrics_comparison_plots$file_path, collapse = " ") %>% 
-  str_c(path("figures", str_c("all_forecast_metrics_comparison_plots_", experiment_name), ext = "pdf"), sep = " ") %>% 
-  system2("pdfunite", args = .)
+merge_single_plots <- function(single_plot_tbl_name) {
+  single_plot_tbl <- get(single_plot_tbl_name)
+  single_plot_tbl %>% 
+    group_by(target_model_name) %>% 
+    group_walk(~{
+      uncollected_plot_paths <- .x$file_path
+      collected_plot_path <- path("figures", experiment_name, str_c("all_", single_plot_tbl_name, "_", .y), ext = "pdf")
+      
+      str_c(uncollected_plot_paths, collapse = " ") %>%
+        str_c(collected_plot_path, sep = " ") %>%
+        system2("pdfunite", args = .)
+    })
+  
+  file_delete(single_plot_tbl$file_path)
+}
 
-str_c(scalar_generated_quantities_by_forecast_time_plots$file_path, collapse = " ") %>% 
-  str_c(path("figures", str_c("all_scalar_generated_quantities_by_forecast_time_plots_", experiment_name), ext = "pdf"), sep = " ") %>% 
-  system2("pdfunite", args = .)
-
-str_c(vector_generated_quantities_by_forecast_time_plots$file_path, collapse = " ") %>% 
-  str_c(path("figures", str_c("all_vector_generated_quantities_by_forecast_time_plots_", experiment_name), ext = "pdf"), sep = " ") %>% 
-  system2("pdfunite", args = .)
-
-# Cleanup Figures ---------------------------------------------------------
-file_delete(forecast_comparison_plots$file_path)
-file_delete(forecast_metrics_comparison_plots$file_path)
-file_delete(scalar_generated_quantities_by_forecast_time_plots$file_path)
-file_delete(vector_generated_quantities_by_forecast_time_plots$file_path)
+walk(single_plot_tbl_names, merge_single_plots)

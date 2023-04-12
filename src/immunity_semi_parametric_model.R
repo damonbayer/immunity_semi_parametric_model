@@ -118,3 +118,5 @@ score_with_override <- function (data, metrics = NULL, override = NULL, ...) {
   }
   return(scores)
 }
+
+gg_facet_dims <- function(p) apply(X = ggplot_build(p)$layout$layout[,c("ROW", "COL")], MARGIN = 2, max)
