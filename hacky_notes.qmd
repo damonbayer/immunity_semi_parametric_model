@@ -1,0 +1,79 @@
+---
+title: "Hacky Notes"
+format: html
+---
+
+Current models feature a few convenient, but technically wrong distributional choices.
+
+
+
+## Initial compartment sizes
+```{julia}
+# | eval: false
+E_init_prop_non_centered ~ Normal()
+I_init_prop_non_centered ~ Normal()
+R_init_prop_non_centered ~ Normal()
+
+E_init_prop = logistic(E_init_prop_non_centered * E_init_prop_non_centered_scale + E_init_prop_non_centered_loc)
+I_init_prop = logistic(I_init_prop_non_centered * I_init_prop_non_centered_scale + I_init_prop_non_centered_loc)
+R_init_prop = logistic(R_init_prop_non_centered * R_init_prop_non_centered_scale + R_init_prop_non_centered_loc)
+
+E_init = E_init_prop * popsize
+I_init = I_init_prop * popsize
+R_init = R_init_prop * popsize
+S_init = max(1, remaining_population_init - (E_init + I_init + R_init))
+```
+
+Technically, it is possible for `E_init + I_init + R_init` to be greater than the population size, hence the `S_init = max(1` part.
+
+It would be better to approach this with a Diricihelt multinomial or a stick breaking prior.
+
+
+## Data observation model
+
+
+```{julia}
+# | eval: false
+new_cases_mean = sol_new_cases .* ρ_cases
+new_seq_mean = new_cases_mean .* ρ_seq
+new_seq_variant_1_mean = new_seq_mean .* (1 .- prop_variant_2)
+new_seq_variant_2_mean = new_seq_mean .* prop_variant_2
+
+data_new_cases[i] ~ NegativeBinomial2(new_cases_mean[i], ϕ_new_cases)
+data_new_seq_variant_1[i] ~ NegativeBinomial2(new_seq_variant_1_mean[i], ϕ_new_seq)
+data_new_seq_variant_2[i] ~ NegativeBinomial2(new_seq_variant_2_mean[i], ϕ_new_seq)
+```
+
+Technically, it is possible for `data_new_seq_variant_1 + data_new_seq_variant_2` to be greater than `data_new_cases`.
+(Although, it's always possible for any of these numbers to be > population, Negative Binomial is unbounded)
+
+It would be better to write as
+
+```{julia}
+data_new_cases[i] ~ NegativeBinomial2(new_cases_mean[i], ϕ_new_cases)
+data_new_seq[i] ~ BetaBinomial2(data_new_cases[i], ρ_seq, ϕ)
+data_new_seq_variant_2[i] ~ BetaBinomial2(data_new_seq[i], prop_variant_2[i], ϕ)
+data_new_seq_variant_1[i] = data_new_seq[i] - data_new_seq_variant_2[i]
+```
+
+This is annoying because priors on BetaBinomial overdispersion are hard.
+
+```{julia}
+# | eval: false
+function BetaBinomial2(n, μ, ϕ)
+    α = μ * ϕ
+    β = (1 - μ) * ϕ
+    α = clamp(α, nextfloat(zero(α)), prevfloat(typemax(α)))
+    β = clamp(β, nextfloat(zero(β)), prevfloat(typemax(β)))
+    Distributions.BetaBinomial(n, α, β)
+end
+```
+
+This is overdispersed compared to a Poisson when
+
+```{julia}
+# | eval: false
+ϕ > (n - 1) / μ - n
+```
+
+so I would have to set some weird prior on it.
