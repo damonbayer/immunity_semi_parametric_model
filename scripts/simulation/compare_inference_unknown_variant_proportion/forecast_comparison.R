@@ -246,6 +246,8 @@ single_posterior_predictive_plots <-
 
 # Save Figures ------------------------------------------------------------
 dir_create(path("figures", experiment_name))
+dir_create(path("figures", experiment_name, all_model_names))
+
 all_plot_tbl_names <- ls()[str_ends(ls(), "_plots")]
 single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "single", negate = F)]
 non_single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "single", negate = T)]
@@ -274,7 +276,7 @@ merge_single_plots <- function(single_plot_tbl_name) {
     group_by(target_model_name) %>% 
     group_walk(~{
       uncollected_plot_paths <- .x$file_path
-      collected_plot_path <- path("figures", experiment_name, str_c("all_", single_plot_tbl_name, "_", .y), ext = "pdf")
+      collected_plot_path <- path("figures", experiment_name, .y, str_c("all_", single_plot_tbl_name, "_", .y), ext = "pdf")
       
       str_c(uncollected_plot_paths, collapse = " ") %>%
         str_c(collected_plot_path, sep = " ") %>%
@@ -283,5 +285,7 @@ merge_single_plots <- function(single_plot_tbl_name) {
   
   file_delete(single_plot_tbl$file_path)
 }
+
+get(single_plot_tbl_names[1])$file_path
 
 walk(single_plot_tbl_names, merge_single_plots)
