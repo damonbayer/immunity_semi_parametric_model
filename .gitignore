@@ -111,3 +111,4 @@ Temporary Items
 *.jld2
 *.pdf
 /results
+/.R_outbreak-info-token
