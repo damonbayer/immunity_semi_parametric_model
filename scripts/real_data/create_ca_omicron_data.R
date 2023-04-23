@@ -4,7 +4,6 @@ library(glue)
 library(ckanr)
 library(fs)
 
-
 # Setup -------------------------------------------------------------------
 first_date_to_report <- ymd("2021-05-03")
 last_date_to_report <- ymd("2022-05-01")
@@ -270,7 +269,8 @@ initialization_values <-
 # Save Data ---------------------------------------------------------------
 write_csv(dat, file = path("data", "real_data", "ca_data", ext = "csv"))
 write_csv(initialization_values, file = path("data", "real_data", "initialization_values_ca_data", ext = "csv"))
-
+dat <- read_csv(path("data", "real_data", "ca_data", ext = "csv"))
+initialization_values <- read_csv(path("data", "real_data", "initialization_values_ca_data", ext = "csv"))
 
 # Plot Data ---------------------------------------------------------------
 plot_all_data_for_region <- function(target_region) {
@@ -312,3 +312,35 @@ figure_tbl$file_path %>%
   system2("pdfunite", args = .)
 
 walk(figure_tbl$file_path, file_delete)
+
+
+# Additional Exploration --------------------------------------------------
+ca_dat_for_reg <- 
+  dat %>% 
+  filter(county == "California") %>% 
+  filter(time >= 25,
+         time <= 40) %>% 
+  filter(total_seq > 0)
+
+ca_reression <- glm(formula = cbind(omicron_seq, total_seq - omicron_seq) ~ time, family = "binomial", data = ca_dat_for_reg)
+
+augment(ca_reression, newdata = tibble(time = seq(0, 35, by = 0.1)), type.predict = "response") %>% 
+  arrange(abs(.fitted - 0.05)) %>%
+  head(1) %>% 
+  pull(time)
+
+dat %>%
+  filter(county %in% unique(dat$county)[1:58]) %>%
+  filter(total_seq > 0) %>%
+  mutate(
+    prop_omicron = omicron_seq / total_seq,
+    other_seq = total_seq - omicron_seq
+  ) %>%
+  ggplot(aes(end_date, prop_omicron, group = county, omicron_seq = omicron_seq, other_seq = other_seq)) +
+  geom_point() +
+  geom_smooth(
+    method = "glm",
+    method.args = list(family = "binomial"),
+    formula = cbind(omicron_seq, other_seq) ~ x, se = F, alpha = 0.5
+  )
+
