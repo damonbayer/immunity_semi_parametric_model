@@ -3,9 +3,7 @@ title: "Hacky Notes"
 format: html
 ---
 
-Current models feature a few convenient, but technically wrong distributional choices.
-
-
+Current models feature a few convenient, but technically wrong or bad choices.
 
 ## Initial compartment sizes
 ```{julia}
@@ -77,3 +75,8 @@ This is overdispersed compared to a Poisson when
 ```
 
 so I would have to set some weird prior on it.
+
+## Logistic regression parameterization
+
+We assume prop_variant_2 follows a logistic growth pattern, however variant 2 is not introduced into the data until a later time (around $t = 20$ weeks).
+Thus, modeling growth as logistic from $t = 0$ onward is incorrect.
