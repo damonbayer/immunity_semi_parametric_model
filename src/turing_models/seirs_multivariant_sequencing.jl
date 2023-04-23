@@ -15,26 +15,26 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     dur_infectious₁_uncentered ~ Normal()
     dur_infectious₂_uncentered ~ Normal()
 
-    dur_hospitalization₁_uncentered ~ Normal()
-    dur_hospitalization₂_uncentered ~ Normal()
+    dur_hospitalized₁_uncentered ~ Normal()
+    dur_hospitalized₂_uncentered ~ Normal()
 
     dur_icu₁_uncentered ~ Normal()
     dur_icu₂_uncentered ~ Normal()
 
-    dur_waning₁_uncentered ~ Normal()
-    dur_waning₂_uncentered ~ Normal()
+    dur_immune₁_uncentered ~ Normal()
+    dur_immune₂_uncentered ~ Normal()
 
-    ihr₁_uncentered ~ Normal()
-    ihr₂_uncentered ~ Normal()
-    ihr₃_uncentered ~ Normal()
+    IHR₁_uncentered ~ Normal()
+    IHR₂_uncentered ~ Normal()
+    IHR₃_uncentered ~ Normal()
 
-    hicur₁_uncentered ~ Normal()
-    hicur₂_uncentered ~ Normal()
-    hicur₃_uncentered ~ Normal()
+    HICUR₁_uncentered ~ Normal()
+    HICUR₂_uncentered ~ Normal()
+    HICUR₃_uncentered ~ Normal()
 
-    icudr₁_uncentered ~ Normal()
-    icudr₂_uncentered ~ Normal()
-    icudr₃_uncentered ~ Normal()
+    ICUDR₁_uncentered ~ Normal()
+    ICUDR₂_uncentered ~ Normal()
+    ICUDR₃_uncentered ~ Normal()
 
     σ₁_uncentered ~ Normal()
 
@@ -58,26 +58,26 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     dur_infectious₁ = exp(dur_infectious₁_uncentered * dur_infectious₁_scale + dur_infectious₁_loc)
     dur_infectious₂ = exp(dur_infectious₂_uncentered * dur_infectious₂_scale + dur_infectious₂_loc)
 
-    dur_hospitalization₁ = exp(dur_hospitalization₁_uncentered * dur_hospitalization₁_scale + dur_hospitalization₁_loc)
-    dur_hospitalization₂ = exp(dur_hospitalization₂_uncentered * dur_hospitalization₂_scale + dur_hospitalization₂_loc)
+    dur_hospitalized₁ = exp(dur_hospitalized₁_uncentered * dur_hospitalized₁_scale + dur_hospitalized₁_loc)
+    dur_hospitalized₂ = exp(dur_hospitalized₂_uncentered * dur_hospitalized₂_scale + dur_hospitalized₂_loc)
 
     dur_icu₁ = exp(dur_icu₁_uncentered * dur_icu₁_scale + dur_icu₁_loc)
     dur_icu₂ = exp(dur_icu₂_uncentered * dur_icu₂_scale + dur_icu₂_loc)
 
-    dur_waning₁ = exp(dur_waning₁_uncentered * dur_waning₁_scale + dur_waning₁_loc)
-    dur_waning₂ = exp(dur_waning₂_uncentered * dur_waning₂_scale + dur_waning₂_loc)
+    dur_immune₁ = exp(dur_immune₁_uncentered * dur_immune₁_scale + dur_immune₁_loc)
+    dur_immune₂ = exp(dur_immune₂_uncentered * dur_immune₂_scale + dur_immune₂_loc)
 
-    ihr₁ = logistic(ihr₁_uncentered * ihr₁_scale + ihr₁_loc)
-    ihr₂ = logistic(ihr₂_uncentered * ihr₂_scale + ihr₂_loc)
-    ihr₃ = logistic(ihr₃_uncentered * ihr₃_scale + ihr₃_loc)
+    IHR₁ = logistic(IHR₁_uncentered * IHR₁_scale + IHR₁_loc)
+    IHR₂ = logistic(IHR₂_uncentered * IHR₂_scale + IHR₂_loc)
+    IHR₃ = logistic(IHR₃_uncentered * IHR₃_scale + IHR₃_loc)
 
-    hicur₁ = logistic(hicur₁_uncentered * hicur₁_scale + hicur₁_loc)
-    hicur₂ = logistic(hicur₂_uncentered * hicur₂_scale + hicur₂_loc)
-    hicur₃ = logistic(hicur₃_uncentered * hicur₃_scale + hicur₃_loc)
+    HICUR₁ = logistic(HICUR₁_uncentered * HICUR₁_scale + HICUR₁_loc)
+    HICUR₂ = logistic(HICUR₂_uncentered * HICUR₂_scale + HICUR₂_loc)
+    HICUR₃ = logistic(HICUR₃_uncentered * HICUR₃_scale + HICUR₃_loc)
 
-    icudr₁ = logistic(icudr₁_uncentered * icudr₁_scale + icudr₁_loc)
-    icudr₂ = logistic(icudr₂_uncentered * icudr₂_scale + icudr₂_loc)
-    icudr₃ = logistic(icudr₃_uncentered * icudr₃_scale + icudr₃_loc)
+    ICUDR₁ = logistic(ICUDR₁_uncentered * ICUDR₁_scale + ICUDR₁_loc)
+    ICUDR₂ = logistic(ICUDR₂_uncentered * ICUDR₂_scale + ICUDR₂_loc)
+    ICUDR₃ = logistic(ICUDR₃_uncentered * ICUDR₃_scale + ICUDR₃_loc)
 
     σ₁ = logistic(σ₁_uncentered * σ₁_scale + σ₁_loc)
 
@@ -98,12 +98,12 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     β₂ = R₀₂ * ν₂
     γ₁ = 1 / dur_latent₁
     γ₂ = 1 / dur_latent₂
-    η₁ = 1 / dur_hospitalization₁
-    η₂ = 1 / dur_hospitalization₂
+    η₁ = 1 / dur_hospitalized₁
+    η₂ = 1 / dur_hospitalized₂
     ω₁ = 1 / dur_icu₁
     ω₂ = 1 / dur_icu₂
-    κ₁ = 1 / dur_waning₁
-    κ₂ = 1 / dur_waning₂
+    κ₁ = 1 / dur_immune₁
+    κ₂ = 1 / dur_immune₂
 
     # p = [
     #     β₁, β₂,
@@ -112,9 +112,9 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     #     η₁, η₂,
     #     ω₁, ω₂,
     #     κ₁, κ₂,
-    #     ihr₁, ihr₂, ihr₃,
-    #     hicur₁, hicur₂, hicur₃,
-    #     icudr₁, icudr₂, icudr₃,
+    #     IHR₁, IHR₂, IHR₃,
+    #     HICUR₁, HICUR₂, HICUR₃,
+    #     ICUDR₁, ICUDR₂, ICUDR₃,
     #     σ₁
     # ]
 
@@ -125,9 +125,9 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
         η₁, 0,
         ω₁, 0,
         κ₁, 0,
-        ihr₁, ihr₂, ihr₃,
-        hicur₁, hicur₂, hicur₃,
-        icudr₁, icudr₂, icudr₃,
+        IHR₁, IHR₂, IHR₃,
+        HICUR₁, HICUR₂, HICUR₃,
+        ICUDR₁, ICUDR₂, ICUDR₃,
         σ₁
     ]
 
@@ -218,6 +218,17 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     C₂ = sol_reg_scale_array[27, :]
     C₂₂ = sol_reg_scale_array[28, :]
 
+    dur_latent₁_days=dur_latent₁ * time_interval_in_days
+    dur_latent₂_days=dur_latent₂ * time_interval_in_days
+    dur_infectious₁_days=dur_infectious₁ * time_interval_in_days
+    dur_infectious₂_days=dur_infectious₂ * time_interval_in_days
+    dur_hospitalized₁_days=dur_hospitalized₁ * time_interval_in_days
+    dur_hospitalized₂_days=dur_hospitalized₂ * time_interval_in_days
+    dur_icu₁_days=dur_icu₁ * time_interval_in_days
+    dur_icu₂_days=dur_icu₂ * time_interval_in_days
+    dur_immune₁_days=dur_immune₁ * time_interval_in_days
+    dur_immune₂_days=dur_immune₂ * time_interval_in_days
+
     return (
         S_init=(S₀+S₂₂)[init_index_to_report],
         E_init=(E₁+E₁₂+E₂+E₂₂)[init_index_to_report],
@@ -226,7 +237,7 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
         H_init=(H₁+H₁₂+H₂+H₂₂)[init_index_to_report],
         ICU_init=(ICU₁+ICU₁₂+ICU₂+ICU₂₂)[init_index_to_report],
         D_init=(D₁+D₁₂+D₂+D₂₂)[init_index_to_report],
-        C_init = (C₁+C₁₂+C₂+C₂₂)[init_index_to_report],
+        C_init=(C₁+C₁₂+C₂+C₂₂)[init_index_to_report],
         S=(S₀+S₂₂)[init_index_to_report:end],
         E=(E₁+E₁₂+E₂+E₂₂)[init_index_to_report:end],
         I=(I₁+I₁₂+I₂+I₂₂)[init_index_to_report:end],
@@ -263,6 +274,36 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
         C₁₂=C₁₂[init_index_to_report:end],
         C₂=C₂[init_index_to_report:end],
         C₂₂=C₂₂[init_index_to_report:end],
-        prop_variant_2=((I₁₂+I₂+I₂₂)./(I₁+I₁₂+I₂+I₂₂))[init_index_to_report:end]
+        prop_variant_2=((I₁₂+I₂+I₂₂)./(I₁+I₁₂+I₂+I₂₂))[init_index_to_report:end],
+        R₀₁=R₀₁,
+        R₀₂=R₀₂,
+        dur_latent₁_days=dur_latent₁_days,
+        dur_latent₂_days=dur_latent₂_days,
+        dur_infectious₁_days=dur_infectious₁_days,
+        dur_infectious₂_days=dur_infectious₂_days,
+        dur_hospitalized₁_days=dur_hospitalized₁_days,
+        dur_hospitalized₂_days=dur_hospitalized₂_days,
+        dur_icu₁_days=dur_icu₁_days,
+        dur_icu₂_days=dur_icu₂_days,
+        dur_immune₁_days=dur_immune₁_days,
+        dur_immune₂_days=dur_immune₂_days,
+        IHR₁=IHR₁,
+        IHR₂=IHR₂,
+        IHR₃=IHR₃,
+        HICUR₁=HICUR₁,
+        HICUR₂=HICUR₂,
+        HICUR₃=HICUR₃,
+        ICUDR₁=ICUDR₁,
+        ICUDR₂=ICUDR₂,
+        ICUDR₃=ICUDR₃,
+        σ₁=σ₁,
+        ρ_deaths=ρ_deaths,
+        ρ_cases=ρ_cases,
+        ρ_seq=ρ_seq,
+        ϕ_new_cases=ϕ_new_cases,
+        ϕ_new_seq=ϕ_new_seq,
+        ϕ_hospitalizations=ϕ_hospitalizations,
+        ϕ_icu=ϕ_icu,
+        ϕ_new_deaths=ϕ_new_deaths
     )
 end
