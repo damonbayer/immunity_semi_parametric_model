@@ -52,9 +52,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
         R₀_params_non_centered ~ MvNormal(Zeros(l_param_change_times + 1), I) # +1 for inital value
         σ_R₀_non_centered ~ Normal()
     elseif R₀_model == "seq-informed"
-        R₀_saturated_non_centered ~ Normal()
-        R₀_shape_non_centered ~ Normal()
-        prop_R₀_mixed_non_centered ~ Normal()
+        R₀_non_centered_variant_1 ~ Normal()
+        R₀_non_centered_variant_2 ~ Normal()
     end
 
     dur_latent_non_centered ~ Normal()
@@ -169,15 +168,9 @@ prob = ODEProblem{true}(seirs_ode_log!,
         R₀_t = vcat(R₀_init, R₀_t_no_init)
 
     elseif R₀_model == "seq-informed"
-        R₀_saturated = exp(R₀_saturated_non_centered * R₀_saturated_non_centered_scale + R₀_saturated_non_centered_loc)
-        prop_R₀_mixed = logistic(prop_R₀_mixed_non_centered * prop_R₀_mixed_non_centered_scale + prop_R₀_mixed_non_centered_loc)
-        R₀_mixed = R₀_saturated / prop_R₀_mixed
-        R₀_shape = exp(R₀_shape_non_centered * R₀_shape_non_centered_scale + R₀_shape_non_centered_loc)
-
-        R₀_α₀ = log(R₀_saturated)
-        R₀_α₁ = (log(R₀_mixed) - log(R₀_saturated)) * 4^R₀_shape
-
-        R₀_t = exp.(R₀_α₀ .+ R₀_α₁ .* (prop_variant_2 .* (1 .- prop_variant_2)) .^ R₀_shape)
+        R₀_variant_1 = exp(R₀_non_centered_variant_1 * R₀_non_centered_variant_1_scale + R₀_non_centered_variant_1_loc)
+        R₀_variant_2 = exp(R₀_non_centered_variant_2 * R₀_non_centered_variant_2_scale + R₀_non_centered_variant_2_loc)
+        R₀_t = (1 .- prop_variant_2) .* R₀_variant_1 .+ prop_variant_2 .* R₀_variant_2
     end
 
     # Natural scale transformation
@@ -239,7 +232,6 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     hospitalizations_mean = sol_hospitalizations
     new_cases_mean = sol_new_cases .* ρ_cases
-    new_seq_mean = new_cases_mean .* ρ_seq
     icu_mean = sol_icu
     new_deaths_mean = sol_new_deaths .* ρ_deaths
 
@@ -251,6 +243,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     end
 
     if "seq-informed" ∈ [immunity_model, IHR_model, R₀_model]
+        new_seq_mean = new_cases_mean .* ρ_seq
         new_seq_variant_1_mean = new_seq_mean .* (1 .- prop_variant_2[2:end])
         new_seq_variant_2_mean = new_seq_mean .* prop_variant_2[2:end]
 
@@ -278,7 +271,6 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     gq = (
         R₀_t=R₀_t,
-        dur_immune_t=dur_immune_t,
         IHR_t=IHR_t,
         ρ_cases=ρ_cases,
         ρ_deaths=ρ_deaths,
@@ -292,7 +284,6 @@ prob = ODEProblem{true}(seirs_ode_log!,
         ϕ_new_deaths=ϕ_new_deaths,
         hospitalizations_mean=hospitalizations_mean,
         new_cases_mean=new_cases_mean,
-        new_seq_mean=new_seq_mean,
         icu_mean=icu_mean,
         new_deaths_mean=new_deaths_mean,
         S_compartment=S_compartment,
@@ -317,6 +308,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
             time_to_saturation=time_to_saturation,
             logistic_growth_intercept=logistic_growth_intercept,
             logistic_growth_slope=logistic_growth_slope,
+            new_seq_mean=new_seq_mean,
             new_seq_variant_1_mean=new_seq_variant_1_mean,
             new_seq_variant_2_mean=new_seq_variant_2_mean,
             prop_variant_2=prop_variant_2
@@ -351,12 +343,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
         gq = merge(gq, (σ_R₀=σ_R₀,))
     elseif R₀_model == "seq-informed"
         gq = merge(gq, (
-            R₀_saturated=R₀_saturated,
-            prop_R₀_mixed=prop_R₀_mixed,
-            R₀_mixed=R₀_mixed,
-            R₀_shape=R₀_shape,
-            R₀_α₀=R₀_α₀,
-            R₀_α₁=R₀_α₁
+        R₀_variant_1=R₀_variant_1,
+        R₀_variant_2=R₀_variant_2
         ))
     end
 

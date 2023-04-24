@@ -4,7 +4,7 @@ const time_interval_in_days = 7.0
 if "seq-informed" ∈ [immunity_model, IHR_model, R₀_model]
     # variant2:variant1 ratio
     const variant_ratio_at_logistic_growth_offset_time_non_centered_loc = logit(0.05)
-    const time_to_saturation_non_centered_loc = log(12)
+    const time_to_saturation_non_centered_loc = log(7)
 end
 
 if immunity_model == "constant"
@@ -35,9 +35,8 @@ elseif R₀_model == "gmrf"
     const σ_R₀_non_centered_loc = -2
     const R₀_init_non_centered_loc = log(1.5)
 elseif R₀_model == "seq-informed"
-    const R₀_saturated_non_centered_loc = log(1.5)
-    const prop_R₀_mixed_non_centered_loc = logit(0.5)
-    const R₀_shape_non_centered_loc = log(1)
+    const R₀_non_centered_variant_1_loc = log(1.5)
+    const R₀_non_centered_variant_2_loc = log(1.5 * 1.5)
 end
 
 const dur_latent_non_centered_loc = log(2 / 7)
@@ -46,7 +45,7 @@ const dur_hospitalized_non_centered_loc = log(3 / 7)
 const dur_icu_non_centered_loc = log(5 / 7)
 const ρ_cases_non_centered_loc = logit(0.2)
 const ρ_deaths_non_centered_loc = logit(0.9)
-const ρ_seq_non_centered_loc = logit(0.1)
+const ρ_seq_non_centered_loc = logit(0.05)
 const HICUR_non_centered_loc = logit(0.15)
 const ICUDR_non_centered_loc = logit(0.15)
 const E_init_prop_non_centered_loc = logit(700 / 3_000_000)
@@ -89,9 +88,8 @@ elseif R₀_model == "gmrf"
     const σ_R₀_non_centered_scale = 0.1
     const R₀_init_non_centered_scale = 0.2
 elseif R₀_model == "seq-informed"
-    const R₀_saturated_non_centered_scale = 0.2
-    const prop_R₀_mixed_non_centered_scale = 0.3
-    const R₀_shape_non_centered_scale = 0.3
+    const R₀_non_centered_variant_1_scale = 0.2
+    const R₀_non_centered_variant_2_scale = 0.2
 end
 
 const dur_latent_non_centered_scale = 0.2

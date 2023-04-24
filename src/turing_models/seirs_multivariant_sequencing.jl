@@ -6,8 +6,8 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
 @model function seirs_multivariant_sequencing(data_new_cases_variant_1, data_new_cases_variant_2, data_hospitalizations, data_icu, data_new_deaths, data_new_seq_variant_1, data_new_seq_variant_2, obstimes, prob, DEAlgorithm, abstol, reltol, init_init_index_to_report=1)
     l_incidence = length(data_new_deaths)
 
-    R₀₁_uncentered ~ Normal()
-    R₀₂_uncentered ~ Normal()
+    R₀_variant_1_uncentered ~ Normal()
+    R₀_variant_2_uncentered ~ Normal()
 
     dur_latent₁_uncentered ~ Normal()
     dur_latent₂_uncentered ~ Normal()
@@ -49,8 +49,8 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     ϕ_new_deaths_uncentered ~ truncated(Normal(), 0, Inf)
 
     # Centering
-    R₀₁ = exp(R₀₁_uncentered * R₀₁_scale + R₀₁_loc)
-    R₀₂ = exp(R₀₂_uncentered * R₀₂_scale + R₀₂_loc)
+    R₀_variant_1 = exp(R₀_variant_1_uncentered * R₀_variant_1_scale + R₀_variant_1_loc)
+    R₀_variant_2 = exp(R₀_variant_2_uncentered * R₀_variant_2_scale + R₀_variant_2_loc)
 
     dur_latent₁ = exp(dur_latent₁_uncentered * dur_latent₁_scale + dur_latent₁_loc)
     dur_latent₂ = exp(dur_latent₂_uncentered * dur_latent₂_scale + dur_latent₂_loc)
@@ -94,8 +94,8 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     # Transformations
     ν₁ = 1 / dur_infectious₁
     ν₂ = 1 / dur_infectious₂
-    β₁ = R₀₁ * ν₁
-    β₂ = R₀₂ * ν₂
+    β₁ = R₀_variant_1 * ν₁
+    β₂ = R₀_variant_2 * ν₂
     γ₁ = 1 / dur_latent₁
     γ₂ = 1 / dur_latent₂
     η₁ = 1 / dur_hospitalized₁
@@ -275,8 +275,8 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
         C₂=C₂[init_index_to_report:end],
         C₂₂=C₂₂[init_index_to_report:end],
         prop_variant_2=((I₁₂+I₂+I₂₂)./(I₁+I₁₂+I₂+I₂₂))[init_index_to_report:end],
-        R₀₁=R₀₁,
-        R₀₂=R₀₂,
+        R₀_variant_1=R₀_variant_1,
+        R₀_variant_2=R₀_variant_2,
         dur_latent₁_days=dur_latent₁_days,
         dur_latent₂_days=dur_latent₂_days,
         dur_infectious₁_days=dur_infectious₁_days,

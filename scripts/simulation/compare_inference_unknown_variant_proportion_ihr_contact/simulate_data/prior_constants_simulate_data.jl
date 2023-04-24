@@ -5,8 +5,8 @@ variant_2_import_value = log(1_000)
 min_compartment_size = 1e-5
 
 # Locations
-R₀₁_loc = log(1.5)
-R₀₂_loc = log(1.5 * 1.5)
+R₀_variant_1_loc = log(1.5)
+R₀_variant_2_loc = log(1.5 * 1.5)
 
 dur_latent₁_loc = log(2 / 7)
 dur_latent₂_loc = log(2 / 7)
@@ -48,8 +48,8 @@ ICUDR₃_loc = logit(0.15)
 ϕ_new_deaths_loc = sqrt(1/100)
 
 # Scales
-R₀₁_scale = 0.2
-R₀₂_scale = 0.2
+R₀_variant_1_scale = 0.2
+R₀_variant_2_scale = 0.2
 
 dur_latent₁_scale = 0.2
 dur_latent₂_scale = 0.2
