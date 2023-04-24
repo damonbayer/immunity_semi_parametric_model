@@ -15,4 +15,8 @@ module purge
 module load julia/1.8.5
 cd //pub/bayerd/immunity_semi_parametric_model/
 
+if [ $SLURM_ARRAY_TASK_ID == 28 ]; then
+sbatch --depend=afterany:$SLURM_ARRAY_JOB_ID slurm_submissions/simulation/compare_inference_unknown_variant_proportion_ihr_contact/SEIRS_ihr_gmrf_R0_constant_immunity_gmrf/tidy_results.sh
+fi
+
 julia --project --threads 1 scripts/simulation/compare_inference_unknown_variant_proportion_ihr_contact/SEIRS_ihr_gmrf_R0_constant_immunity_gmrf/generate_predictive_and_generated_quantities.jl $SLURM_ARRAY_TASK_ID

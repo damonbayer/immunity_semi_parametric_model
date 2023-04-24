@@ -1,3 +1,5 @@
+library(tidyverse)
+library(fs)
 slurm_dir <- "slurm_submissions/simulation/compare_inference_unknown_variant_proportion_ihr_contact/"
 
 tibble(file_path = dir_ls(slurm_dir, recurse = 1, type = "file")) %>% 
