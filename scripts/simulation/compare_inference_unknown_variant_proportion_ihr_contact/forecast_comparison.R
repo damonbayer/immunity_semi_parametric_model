@@ -65,7 +65,8 @@ tidy_generated_quantities_tbl <-
   mutate(tidy_generated_quantities = future_map(file_path, read_csv)) %>% 
   unnest(tidy_generated_quantities) %>% 
   select(-result_type, -file_path) %>% 
-  mutate(name = str_remove(name, "data+_"))
+  mutate(name = str_remove(name, "data+_")) %>% 
+  mutate(name = fct_reorder(name, str_detect(name, "mean") * 1 + str_detect(name, "compartment") * 2))
 
 tidy_posterior_predictive_score_tbl <- 
   results_tbl %>% 
@@ -205,16 +206,34 @@ plot_single_generated_quantities <- function(target_model_name, target_max_t) {
   tidy_generated_quantities_tbl %>% 
     filter(!is.na(time),
            model_name == target_model_name,
-           max_t == target_max_t) %>% 
-    ggplot(mapping = aes(time, value, ymin = .lower, ymax = .upper, color = distribution, fill = distribution, group = .width)) +
+           max_t == target_max_t,
+           .width == 0.8) %>%
+    ggplot(mapping = aes(time, value, ymin = .lower, ymax = .upper, color = distribution, fill = distribution)) +
     facet_wrap(.~name, scales = "free_y") +
     geom_lineribbon(alpha = 0.25) +
     geom_vline(xintercept = target_max_t, linetype = "dashed") +
     # my_theme +
     scale_y_continuous(labels = comma) +
-    ggtitle(glue("{target_model_name} Generated Quantities at t = {target_max_t}"))
+    ggtitle(glue("{target_model_name} Generated Quantities at t = {target_max_t}"),
+            subtitle = "80% Credible Intervals")
 }
 
+
+plot_compare_posterior_generated_quantities <- function(target_max_t) {
+  tidy_generated_quantities_tbl %>% 
+    filter(!is.na(time),
+           distribution == "posterior",
+           max_t == target_max_t,
+           .width == 0.8) %>% 
+    ggplot(mapping = aes(time, value, ymin = .lower, ymax = .upper, color = model_name, fill = model_name, group = .width)) +
+    facet_wrap(.~name, scales = "free_y") +
+    geom_lineribbon(alpha = 0.25) +
+    geom_vline(xintercept = target_max_t, linetype = "dashed") +
+    # my_theme +
+    scale_y_continuous(labels = comma) +
+    ggtitle(glue("Posterior Generated Quantities at t = {target_max_t}"),
+            subtitle = "80% Credible intervals")
+}
 
 # Create Figures ----------------------------------------------------------
 augment_figure_tbl <- function(figure_tbl) {
@@ -259,6 +278,14 @@ single_generated_quantities_plots <-
          figure = map2(target_model_name, target_max_t, ~plot_single_generated_quantities(target_model_name = .x, target_max_t = .y))) %>% 
   augment_figure_tbl()
 
+compare_posterior_generated_quantities_plots <- 
+  tidy_predictive_tbl %>% 
+  distinct(max_t) %>% 
+  rename_with(~str_c("target_", .x)) %>% 
+  mutate(file_path = path("figures", experiment_name, glue("compare_posterior_generated_quantities_{target_max_t}_plot"), ext = "pdf"),
+         figure = map(target_max_t, ~plot_compare_posterior_generated_quantities(target_max_t = .x))) %>% 
+  augment_figure_tbl()
+
 single_posterior_predictive_plots <- 
   tidy_predictive_tbl %>% 
   distinct(model_name, max_t) %>% 
@@ -273,14 +300,16 @@ dir_create(path("figures", experiment_name))
 dir_create(path("figures", experiment_name, all_model_names))
 
 all_plot_tbl_names <- ls()[str_ends(ls(), "_plots")]
-single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "single", negate = F)]
-non_single_plot_tbl_names <- all_plot_tbl_names[str_starts(all_plot_tbl_names, "single", negate = T)]
+single_plot_tbl_names <- all_plot_tbl_names[str_detect(all_plot_tbl_names, "single", negate = F)]
+non_single_plot_tbl_names <- all_plot_tbl_names[str_detect(all_plot_tbl_names, "single", negate = T)]
 
 # Save all figures
 future_walk(all_plot_tbl_names, ~pwalk(as.list(get(.x)), ~save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, device = cairo_pdf)))
 
 # Merge all figures
-Sys.setenv(PATH=paste(Sys.getenv("PATH"), "/opt/homebrew/bin/", sep=":"))
+if (Sys.info()['sysname'] == "Darwin") {
+  Sys.setenv(PATH=paste(Sys.getenv("PATH"), "/opt/homebrew/bin/", sep=":"))
+}
 
 non_single_plot_tbl_names %>% 
   walk(~{
