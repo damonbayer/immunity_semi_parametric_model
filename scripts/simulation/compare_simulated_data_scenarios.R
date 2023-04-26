@@ -33,9 +33,58 @@ all_generated_quantities %>%
   facet_wrap(~name, scales = "free_y") +
   geom_line(alpha = 0.5)
 
-unique(all_generated_quantities$simulation)
-all_generated_quantities %>% 
-  filter(simulation == "compare_inference_unknown_variant_proportion_ihr_contact",
+target_simulation_name <- "compare_inference_unknown_variant_proportion_ihr"
+
+# First day over 1%
+first_time_new_var <- 
+  all_generated_quantities %>% 
+  filter(simulation == target_simulation_name,
          name == "prop_variant_2") %>% 
   distinct(time, name, value) %>% 
-  arrange(abs(value - 0.99))
+  filter(value >= 0.01) %>% 
+  pull(time) %>% 
+  pluck(1)
+
+time_5_percent <-
+  all_generated_quantities %>% 
+  filter(simulation == target_simulation_name,
+         name == "prop_variant_2") %>% 
+  distinct(time, name, value) %>%
+  arrange(abs(value - 0.05)) %>% 
+  pull(time) %>% 
+  pluck(1)
+
+# First day over 99%
+first_time_sat <- 
+  all_generated_quantities %>% 
+  filter(simulation == target_simulation_name,
+         name == "prop_variant_2") %>% 
+  distinct(time, name, value) %>% 
+  filter(value >= 0.99) %>% 
+  pull(time) %>% 
+  pluck(1)
+
+
+first_time_second_hosp_wave <- 
+  all_generated_quantities %>% 
+  filter(simulation == target_simulation_name,
+         name == "H") %>% 
+  distinct(time, name, value) %>% 
+  filter(sign(value - lag(value)) == -1) %>% 
+  filter(time - lag(time) > 1) %>% 
+  pull(time) %>% 
+  pluck(1)
+
+time_second_hosp_peak <-
+  all_generated_quantities %>% 
+  filter(simulation == target_simulation_name,
+         name == "H",
+         time >= first_time_second_hosp_wave) %>% 
+  distinct(time, name, value) %>% 
+  filter(value == max(value)) %>% 
+  pull(time) %>% 
+  pluck(1)
+
+
+# Final Date Range
+c(first_time_new_var, max(first_time_sat, time_second_hosp_peak))
