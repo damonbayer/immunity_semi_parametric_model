@@ -11,6 +11,7 @@ experiment_name <-  "compare_inference_unknown_variant_proportion_ihr"
 context <- path("simulation", experiment_name)
 all_models_dir <- path("results", context)
 sim_id <- 1
+time_look_for_second_wave <- 22
 
 # Loading Data ------------------------------------------------------------
 dat_tidy <-
@@ -28,6 +29,16 @@ dat_tidy <-
               select(time, name, value)
   ) %>%
   mutate(name = str_remove(name, "data+_"))
+
+true_peak_dat <- 
+  dat_tidy %>% 
+  filter(time > time_look_for_second_wave,
+         !str_detect(name, "variant")) %>% 
+  group_by(name) %>% 
+  filter(value == max(value)) %>% 
+  slice(1) %>% 
+  ungroup() %>% 
+  pivot_longer(-name, names_to = "peak_type")
 
 true_generated_quantities <-
   path("data", context, "true_generated_quantities", ext = "csv") %>%
@@ -79,9 +90,17 @@ tidy_posterior_predictive_score_tbl <-
   mutate(target_type = str_remove(target_type, "data+_")) %>%
   mutate(forecast_horizon = str_c(weeks_ahead, " Week Horizon"))
 
+tidy_posterior_peak <- 
+  results_tbl %>% 
+  filter(result_type == "peak") %>% 
+  mutate(peak = future_map(file_path, read_csv)) %>%
+  unnest(peak) %>%
+  select(-result_type, -file_path) %>% 
+  mutate(name = str_remove(name, "data+_"))
+
 all_target_types <- unique(tidy_predictive_tbl$name)
 all_model_names <- unique(tidy_generated_quantities_tbl$model_name)
-
+all_peak_types <- unique(tidy_posterior_peak$peak_type)
 
 # Plot functions ----------------------------------------------------------
 
@@ -218,7 +237,6 @@ plot_single_generated_quantities <- function(target_model_name, target_max_t) {
             subtitle = "80% Credible Intervals")
 }
 
-
 plot_compare_posterior_generated_quantities <- function(target_max_t) {
   tidy_generated_quantities_tbl %>%
     filter(!is.na(time),
@@ -233,6 +251,32 @@ plot_compare_posterior_generated_quantities <- function(target_max_t) {
     scale_y_continuous(labels = comma) +
     ggtitle(glue("Posterior Generated Quantities at t = {target_max_t}"),
             subtitle = "80% Credible intervals")
+}
+
+plot_peak_assessment <- function(target_peak_type){
+  tmp_tidy_posterior_peak <- 
+    tidy_posterior_peak %>% 
+    filter(peak_type == target_peak_type)
+  
+  tmp_true_peak_dat <- 
+    true_peak_dat %>% 
+    filter(peak_type == target_peak_type) %>% 
+    expand_grid(tmp_tidy_posterior_peak %>%
+                  distinct(max_t))
+  
+  ggplot(mapping = aes(max_t, value)) +
+    facet_grid(name ~ model_name,
+               scales = "free_y",
+               labeller = labeller(
+                 model_name = as_labeller(~str_replace_all(.x, "_", " ")))) +
+    geom_interval(data = tmp_tidy_posterior_peak,
+                  mapping = aes(ymin = .lower, ymax = .upper)) +
+    geom_point(data = tmp_tidy_posterior_peak, shape = "plus") +
+    geom_point(data = tmp_true_peak_dat) +
+    my_theme +
+    scale_y_continuous("Value") +
+    scale_x_continuous("Forecast Time") +
+    ggtitle(glue("Posterior Peak {str_to_title(target_peak_type)}"))  
 }
 
 # Create Figures ----------------------------------------------------------
@@ -294,6 +338,11 @@ single_posterior_predictive_plots <-
          figure = map2(target_model_name, target_max_t, ~plot_single_posterior_predictive(target_model_name = .x, target_max_t = .y))) %>%
   augment_figure_tbl()
 
+peak_assessment_plots <- 
+  tibble(target_peak_type = all_peak_types) %>%
+  mutate(file_path = path("figures", experiment_name, glue("peak_assessment_{target_peak_type}_plot"), ext = "pdf"),
+         figure = future_map(target_peak_type, plot_peak_assessment)) %>%
+  augment_figure_tbl()
 
 # Save Figures ------------------------------------------------------------
 dir_create(path("figures", experiment_name))

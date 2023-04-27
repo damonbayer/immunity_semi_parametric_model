@@ -12,7 +12,7 @@ using LinearAlgebra
 using FillArrays
 using immunity_semi_parametric_model
 
-n_forecast_weeks = 4
+n_forecast_weeks = 10
 
 immunity_model = "gmrf"
 IHR_model = "gmrf"
