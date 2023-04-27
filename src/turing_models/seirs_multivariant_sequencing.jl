@@ -304,6 +304,8 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
         ϕ_new_seq=ϕ_new_seq,
         ϕ_hospitalizations=ϕ_hospitalizations,
         ϕ_icu=ϕ_icu,
-        ϕ_new_deaths=ϕ_new_deaths
+        ϕ_new_deaths=ϕ_new_deaths,
+        IHR_variant_1=IHR₁,
+        IHR_variant_2=IHR₂
     )
 end

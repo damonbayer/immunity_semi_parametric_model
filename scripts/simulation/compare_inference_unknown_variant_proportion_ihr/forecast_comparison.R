@@ -154,6 +154,7 @@ plot_scalar_generated_quantities_by_forecast_time <- function(target_model_name)
   available_generated_quantities_names <-
     tidy_generated_quantities_tbl %>%
     filter(model_name == target_model_name) %>%
+    filter(name != "prop_variant_2") %>% 
     pull(name) %>%
     unique()
 
