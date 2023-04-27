@@ -3,7 +3,7 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     (0.0, obstimes[end]),
     ones(21))
 
-@model function seirs_multivariant_sequencing(data_new_cases_variant_1, data_new_cases_variant_2, data_hospitalizations, data_icu, data_new_deaths, data_new_seq_variant_1, data_new_seq_variant_2, obstimes, prob, DEAlgorithm, abstol, reltol, init_init_index_to_report=1)
+@model function seirs_multivariant_sequencing(data_new_cases_variant_1, data_new_cases_variant_2, data_hospitalizations, data_icu, data_new_deaths, data_new_seq_variant_1, data_new_seq_variant_2, obstimes, prob, DEAlgorithm, abstol, reltol, init_index_to_report=1)
     l_incidence = length(data_new_deaths)
 
     R₀_variant_1_uncentered ~ Normal()
@@ -179,7 +179,7 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     new_seq_variant_1_mean = new_cases_variant_1_mean .* ρ_seq
     new_seq_variant_2_mean = new_cases_variant_2_mean .* ρ_seq
 
-    for i in init_init_index_to_report:l_incidence
+    for i in init_index_to_report:l_incidence
         data_new_cases_variant_1[i] ~ NegativeBinomial2(new_cases_variant_1_mean[i], ϕ_new_cases)
         data_new_cases_variant_2[i] ~ NegativeBinomial2(new_cases_variant_2_mean[i], ϕ_new_cases)
         data_new_seq_variant_1[i] ~ NegativeBinomial2(new_seq_variant_1_mean[i], ϕ_new_seq)

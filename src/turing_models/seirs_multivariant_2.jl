@@ -3,7 +3,7 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     (0.0, obstimes[end]),
     ones(21))
 
-@model function seirs_multivariant_2(data_new_cases, data_hospitalizations, data_icu, data_new_deaths, obstimes, prob, DEAlgorithm, abstol, reltol, init_init_index_to_report=1)
+@model function seirs_multivariant_2(data_new_cases, data_hospitalizations, data_icu, data_new_deaths, obstimes, prob, DEAlgorithm, abstol, reltol, init_index_to_report=1)
     l_incidence = length(data_new_deaths)
 
     R₀₁_uncentered ~ Normal()
@@ -145,7 +145,7 @@ prob = ODEProblem{true}(seirs_multivariant_log_ode_2!,
     new_deaths_mean = sol_new_deaths .* ρ_deaths
     new_cases_mean = sol_new_cases .* ρ_cases
 
-    for i in init_init_index_to_report:l_incidence
+    for i in init_index_to_report:l_incidence
         data_new_cases[i] ~ NegativeBinomial2(new_cases_mean[i], ϕ_new_cases)
         data_hospitalizations[i] ~ Poisson(hospitalizations_mean[i])
         data_icu[i] ~ Poisson(icu_mean[i])
