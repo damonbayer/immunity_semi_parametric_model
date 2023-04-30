@@ -1,5 +1,4 @@
 max_t = isempty(ARGS) ? 28 : parse(Int64, ARGS[1])
-# max out at 37
 using Revise
 using DrWatson
 using Turing
@@ -17,14 +16,12 @@ immunity_model = "gmrf"
 IHR_model = "gmrf"
 R₀_model = "constant"
 
-logistic_growth_time_offset = 25.0
-
 datadir(args...) = projectdir("data", "simulation", "compare_inference_unknown_variant_proportion_ihr_hifi", args...)
 simulationdir(args...) = projectdir("scripts", "simulation", "compare_inference_unknown_variant_proportion_ihr_hifi", args...)
 results_dir(args...) = projectdir("results", "simulation", "compare_inference_unknown_variant_proportion_ihr_hifi", "SEIRS_ihr_gmrf_R0_constant_immunity_gmrf", args...)
 mkpath(results_dir())
 
-sim_id = 1
+include(simulationdir("shared_constants.txt"))
 include(simulationdir("load_simulated_data.jl"))
 include(simulationdir("SEIRS_ihr_gmrf_R0_constant_immunity_gmrf", "prior_constants.jl"))
 include(projectdir("src", "ode_models", "seirs_log_ode.jl"))

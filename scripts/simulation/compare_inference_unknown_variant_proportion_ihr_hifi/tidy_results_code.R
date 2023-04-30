@@ -1,18 +1,15 @@
-time_look_for_second_wave <- 22
+
 results_dir <- path("results", context, model_name)
-sim_id <- 1
+source(path("scripts", context, "shared_constants.txt"))
 
-variant_2_import_time <- 40
-first_obs_time <- 20
-
-dat_tidy <- 
+dat_tidy <-
   path("data", context, "simulated_data", ext = "csv") %>%
   read_csv_as_draws() %>%
   filter(.iteration == sim_id) %>%
   tidy_format_draws_time() %>%
   select(name, time, value) %>%
-  mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - 1 + (time - 1) / 7, time)) %>% 
-  mutate(time = time - (first_obs_time - 1)) %>% 
+  mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - 1 + (time - 1) / 7, time)) %>%
+  mutate(time = time - (first_obs_time - 1)) %>%
   rename(true_value = value) %>%
   bind_rows(.,
             filter(., str_starts(name, "data_new_cases")) %>%
@@ -55,39 +52,39 @@ posterior_predictive <- read_csv_as_draws(posterior_predictive_path)
 tidy_prior_generated_quantities <- tidy_generated_quantities(prior_generated_quantities) %>% mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - first_obs_time + (time - 1) / 7, time))
 tidy_posterior_generated_quantities <- tidy_generated_quantities(posterior_generated_quantities) %>% mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - first_obs_time + (time - 1) / 7, time))
 tidy_prior_predictive <- tidy_predictive(prior_predictive) %>%
-  mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - first_obs_time + (time - 1) / 7, time)) %>% 
+  mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - first_obs_time + (time - 1) / 7, time)) %>%
   mutate(weeks_ahead = time - target_max_t)
 tidy_posterior_predictive <- tidy_predictive(posterior_predictive) %>%
-  mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - first_obs_time + (time - 1) / 7, time)) %>% 
+  mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - first_obs_time + (time - 1) / 7, time)) %>%
   mutate(weeks_ahead = time - target_max_t)
 
 
 # Peak --------------------------------------------------------------------
-est_peak_time <- 
-  posterior_generated_quantities %>% 
-  select(starts_with("."), matches("mean")) %>% 
-  select(-matches("seq")) %>% 
-  tidy_format_draws_time() %>% 
-  filter(time > time_look_for_second_wave) %>% 
-  select(.draw, value, name, time) %>% 
-  group_by(.draw, name) %>% 
-  filter(value - lag(value) > 0) %>% 
-  filter(value == max(value)) %>% 
-  slice(1) %>% 
-  ungroup() %>% 
-  select(.draw, name, peak_time = time) %>% 
+est_peak_time <-
+  posterior_generated_quantities %>%
+  select(starts_with("."), matches("mean")) %>%
+  select(-matches("seq")) %>%
+  tidy_format_draws_time() %>%
+  filter(time > time_look_for_second_wave) %>%
+  select(.draw, value, name, time) %>%
+  group_by(.draw, name) %>%
+  filter(value - lag(value) > 0) %>%
+  filter(value == max(value)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  select(.draw, name, peak_time = time) %>%
   mutate(name = name %>%
            str_remove("_mean") %>%
            str_c("data_", .))
 
-tidy_posterior_peak <- 
+tidy_posterior_peak <-
   posterior_predictive %>%
-  tidy_format_draws_time() %>% 
-  select(.draw, name, value, time) %>% 
-  right_join(est_peak_time %>% rename(time = peak_time)) %>% 
-  select(name, value, time) %>% 
-  pivot_longer(-name, names_to = "peak_type") %>% 
-  group_by(name, peak_type) %>% 
+  tidy_format_draws_time() %>%
+  select(.draw, name, value, time) %>%
+  right_join(est_peak_time %>% rename(time = peak_time)) %>%
+  select(name, value, time) %>%
+  pivot_longer(-name, names_to = "peak_type") %>%
+  group_by(name, peak_type) %>%
   median_qi(.width = c(0.5, 0.8, 0.95))
 
 # Score -------------------------------------------------------------------

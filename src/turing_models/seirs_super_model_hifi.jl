@@ -216,15 +216,26 @@ prob = ODEProblem{true}(seirs_ode_log!,
     end
     param_callback = PresetTimeCallback(param_change_times, param_affect_κ!, save_positions=(false, false))
 
-    sol = solve(prob, DEAlgorithm; callback=param_callback, saveat=obstimes, save_start=true, verbose=false, abstol=abstol, reltol=reltol, u0=u0, p=p, tspan=(0.0, obstimes[end]))
+    obstimes_with_init = vcat(0, obstimes)
+
+    if "seq-informed" ∈ [immunity_model, IHR_model, R₀_model]
+        seq_obstimes_with_init = vcat(2 * seq_obstimes[1] - seq_obstimes[2], seq_obstimes)
+        all_solve_times = sort(union(obstimes_with_init, seq_obstimes_with_init))
+    else
+        all_solve_times = obstimes_with_init
+    end
+
+    sol = solve(prob, DEAlgorithm; callback=param_callback, saveat=all_solve_times, save_start=true, verbose=false, abstol=abstol, reltol=reltol, u0=u0, p=p, tspan=(0.0, obstimes[end]))
 
     if sol.retcode != :Success
         Turing.@addlogprob! -Inf
         return
     end
 
+    obstimes_index_in_all_solve_times = [findfirst(==(x), sol.t) for x in obstimes_with_init]
+
     # Likelihood calculations
-    sol_reg_scale_array = exp.(Array(sol))
+    sol_reg_scale_array = exp.(Array(sol)[:, obstimes_index_in_all_solve_times])
 
     sol_hospitalizations = sol_reg_scale_array[4, 2:end]
     sol_new_cases = sol_reg_scale_array[6, 2:end] - sol_reg_scale_array[6, 1:(end-1)]
@@ -244,25 +255,13 @@ prob = ODEProblem{true}(seirs_ode_log!,
     end
 
     if "seq-informed" ∈ [immunity_model, IHR_model, R₀_model]
-        seq_obstimes_with_origin = vcat(seq_obstimes[1] - 1 / 7, seq_obstimes)
+        seq_obstimes_index_in_all_solve_times = [findfirst(==(x), sol.t) for x in seq_obstimes_with_init]
+        seq_sol_reg_scale_array = Array(sol)[:, seq_obstimes_index_in_all_solve_times]
 
-        # Have to solve diff eq at finer resolution
-        u0_reg_scale = [S_init, E_init, I_init, H_init, R_init, C_init, ICU_init, D_init]
-        u0 = log.(u0_reg_scale)
-        p = [β_init, γ, ν, η, IHR_init, κ_init, HICUR, ω, ICUDR]
-        seq_sol = solve(prob, DEAlgorithm; callback=param_callback, saveat=seq_obstimes_with_origin, save_start=false, verbose=false, abstol=abstol, reltol=reltol, u0=u0, p=p, tspan=(0.0, seq_obstimes[end]))
-
-        # If the ODE solver fails, reject the sample by adding -Inf to the likelihood
-        if !SciMLBase.successful_retcode(seq_sol.retcode)
-            Turing.@addlogprob! -Inf
-            return
-        end
-
-        seq_sol_reg_scale_array = exp.(Array(seq_sol))
         seq_sol_new_cases = seq_sol_reg_scale_array[6, 2:end] - seq_sol_reg_scale_array[6, 1:(end-1)]
         seq_new_cases_mean = seq_sol_new_cases .* ρ_cases
         new_seq_mean = seq_new_cases_mean .* ρ_seq
-        prop_variant_2_seq = prop_variant_2_fn(seq_obstimes_with_origin)
+        prop_variant_2_seq = prop_variant_2_fn(seq_obstimes_with_init)
 
         new_seq_variant_1_mean = new_seq_mean .* (1 .- prop_variant_2_seq[2:end])
         new_seq_variant_2_mean = new_seq_mean .* prop_variant_2_seq[2:end]

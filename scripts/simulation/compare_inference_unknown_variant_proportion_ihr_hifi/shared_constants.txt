@@ -1,0 +1,6 @@
+time_look_for_second_wave = 22
+logistic_growth_time_offset = 25.0
+sim_id = 1
+variant_2_import_time = 40
+first_obs_time = 20
+init_index_to_report = first_obs_time

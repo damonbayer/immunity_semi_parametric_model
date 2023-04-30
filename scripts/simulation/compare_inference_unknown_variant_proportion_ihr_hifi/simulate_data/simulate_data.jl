@@ -13,18 +13,15 @@ datadir(args...) = projectdir("data", "simulation", "compare_inference_unknown_v
 mkpath(simulationdir())
 mkpath(datadir())
 
-variant_2_import_time = 40
-init_index_to_report = 20
 obstimes = collect(1:1:(52*2))
 max_index_forecast = length(obstimes)
 
-
+include(simulationdir("shared_constants.txt"))
 include(simulationdir("simulate_data", "prior_constants_simulate_data.jl"))
 include(projectdir("src", "ode_models", "seirs_multivariant_log_ode_2.jl"))
 include(projectdir("src", "turing_models", "seirs_multivariant_sequencing_hifi.jl"))
 
 seq_obstimes = (variant_2_import_time - 1):1/7:obstimes[end] # sequences are reported daily, starting one week before the first case
-# seq_obstimes = collect(1/7:1/7:(52*2))
 seq_max_index_forecast = length(seq_obstimes)
 
 data_zero_cases_variant_1 = zeros(Int64, max_index_forecast)
