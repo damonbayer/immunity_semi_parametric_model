@@ -1,13 +1,15 @@
 ---
 title: "Hacky Notes"
 format: html
+execute:
+  eval: false
 ---
 
 Current models feature a few convenient, but technically wrong or bad choices.
 
+
 ## Initial compartment sizes
 ```{julia}
-# | eval: false
 E_init_prop_non_centered ~ Normal()
 I_init_prop_non_centered ~ Normal()
 R_init_prop_non_centered ~ Normal()
@@ -50,14 +52,15 @@ It would be better to write as
 ```{julia}
 data_new_cases[i] ~ NegativeBinomial2(new_cases_mean[i], ϕ_new_cases)
 data_new_seq[i] ~ BetaBinomial2(data_new_cases[i], ρ_seq, ϕ)
+# or data_new_seq[i] ~ Binomial(data_new_cases[i], ρ_seq)
 data_new_seq_variant_2[i] ~ BetaBinomial2(data_new_seq[i], prop_variant_2[i], ϕ)
+# or data_new_seq_variant_2[i] ~ Binomial2(data_new_seq[i], prop_variant_2[i])
 data_new_seq_variant_1[i] = data_new_seq[i] - data_new_seq_variant_2[i]
 ```
 
 This is annoying because priors on BetaBinomial overdispersion are hard.
 
 ```{julia}
-# | eval: false
 function BetaBinomial2(n, μ, ϕ)
     α = μ * ϕ
     β = (1 - μ) * ϕ
@@ -70,7 +73,6 @@ end
 This is overdispersed compared to a Poisson when
 
 ```{julia}
-# | eval: false
 ϕ > (n - 1) / μ - n
 ```
 
@@ -80,3 +82,5 @@ so I would have to set some weird prior on it.
 
 We assume prop_variant_2 follows a logistic growth pattern, however variant 2 is not introduced into the data until a later time (around $t = 20$ weeks).
 Thus, modeling growth as logistic from $t = 0$ onward is incorrect.
+
+I fixed this.
