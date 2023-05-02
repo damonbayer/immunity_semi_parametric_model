@@ -1,6 +1,8 @@
 ---
 title: "Hacky Notes"
-format: html
+format:
+  html:
+    embed-resources: true
 execute:
   eval: false
 ---
@@ -33,7 +35,6 @@ It would be better to approach this with a Diricihelt multinomial or a stick bre
 
 
 ```{julia}
-# | eval: false
 new_cases_mean = sol_new_cases .* ρ_cases
 new_seq_mean = new_cases_mean .* ρ_seq
 new_seq_variant_1_mean = new_seq_mean .* (1 .- prop_variant_2)
