@@ -22,7 +22,7 @@ all_generated_quantities <-
 all_dat %>% 
   mutate(simulation = factor(simulation)) %>% 
   ggplot(aes(time, value, ymin = .lower, ymax = .upper, fill = simulation, group = .width)) +
-  facet_wrap(~name, scales = "free_y") +
+  facet_wrap(~name, scales = "free") +
   geom_lineribbon(alpha = 0.5)
 
 all_generated_quantities %>% 
@@ -33,33 +33,35 @@ all_generated_quantities %>%
   facet_wrap(~name, scales = "free_y") +
   geom_line(alpha = 0.5)
 
-target_simulation_name <- "compare_inference_unknown_variant_proportion_ihr"
+target_simulation_name <- "compare_inference_unknown_variant_proportion_ihr_hifi_contact"
 
-# First day over 1%
-first_time_new_var <- 
+interpolated_prop_variant_2 <- 
   all_generated_quantities %>% 
   filter(simulation == target_simulation_name,
          name == "prop_variant_2") %>% 
-  distinct(time, name, value) %>% 
+  distinct(time, value) %>% 
+  mutate(exp_value = qlogis(p = value)) %>% 
+  right_join(., tibble(time = seq(min(.$time), max(.$time), by = 0.1))) %>% 
+  arrange(time) %>% 
+  mutate(exp_value = approx(time,exp_value,time)$y) %>% 
+  mutate(value = plogis(q = exp_value))
+
+# First day over 1%
+first_time_new_var <- 
+  interpolated_prop_variant_2 %>% 
   filter(value >= 0.01) %>% 
   pull(time) %>% 
   pluck(1)
 
 time_5_percent <-
-  all_generated_quantities %>% 
-  filter(simulation == target_simulation_name,
-         name == "prop_variant_2") %>% 
-  distinct(time, name, value) %>%
-  arrange(abs(value - 0.05)) %>% 
+  interpolated_prop_variant_2 %>% 
+  arrange(abs(exp_value - qlogis(0.05))) %>% 
   pull(time) %>% 
   pluck(1)
 
 # First day over 99%
 first_time_sat <- 
-  all_generated_quantities %>% 
-  filter(simulation == target_simulation_name,
-         name == "prop_variant_2") %>% 
-  distinct(time, name, value) %>% 
+  interpolated_prop_variant_2 %>% 
   filter(value >= 0.99) %>% 
   pull(time) %>% 
   pluck(1)
@@ -87,4 +89,4 @@ time_second_hosp_peak <-
 
 
 # Final Date Range
-c(first_time_new_var, max(first_time_sat, time_second_hosp_peak))
+c(round(first_time_new_var), round(max(first_time_sat, time_second_hosp_peak)))
