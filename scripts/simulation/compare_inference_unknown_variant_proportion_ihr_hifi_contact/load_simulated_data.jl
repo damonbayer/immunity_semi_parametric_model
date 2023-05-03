@@ -57,8 +57,6 @@ missing_data_icu_forecast = Array{Union{Missing, Int64}}(missing, l_data_forecas
 missing_data_new_deaths_forecast = Array{Union{Missing, Int64}}(missing, l_data_forecast)
 
 
-variant_2_import_time = 40
-init_index_to_report = 20
 # sequences are reported daily, starting one week before the first case
 seq_obstimes = float.((variant_2_import_time - init_index_to_report):1/7:obstimes[end])
 seq_obstimes_forecast = float.((variant_2_import_time - init_index_to_report):1/7:obstimes_forecast[end])

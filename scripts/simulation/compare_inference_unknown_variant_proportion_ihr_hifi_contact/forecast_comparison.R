@@ -7,14 +7,11 @@ source("src/immunity_semi_parametric_model.R")
 options("parallelly.fork.enable" = TRUE)
 plan(multicore)
 
-variant_2_import_time <- 40
-first_obs_time <- 20
 
 experiment_name <-  "compare_inference_unknown_variant_proportion_ihr_hifi_contact"
 context <- path("simulation", experiment_name)
 all_models_dir <- path("results", context)
-sim_id <- 1
-time_look_for_second_wave <- 22
+source(path("scripts", context, "shared_constants.txt"))
 
 # Loading Data ------------------------------------------------------------
 dat_tidy <-
