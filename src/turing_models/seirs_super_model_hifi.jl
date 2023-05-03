@@ -20,6 +20,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     if "seq-informed" ∈ [immunity_model, IHR_model, R₀_model]
         variant_ratio_at_logistic_growth_offset_time_non_centered ~ Normal()
         time_to_saturation_non_centered ~ Normal()
+        ϕ_new_seq_uncentered ~ truncated(Normal(), 0, Inf)
     end
 
     if immunity_model == "seq-informed"
@@ -70,7 +71,6 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     ϕ_hospitalizations_non_centered ~ truncated(Normal(), 0, Inf)
     ϕ_new_cases_non_centered ~ truncated(Normal(), 0, Inf)
-    ϕ_new_seq_uncentered ~ truncated(Normal(), 0, Inf)
     ϕ_icu_non_centered ~ truncated(Normal(), 0, Inf)
     ϕ_new_deaths_non_centered ~ truncated(Normal(), 0, Inf)
 
@@ -94,7 +94,6 @@ prob = ODEProblem{true}(seirs_ode_log!,
     ICUDR = logistic(ICUDR_non_centered * ICUDR_non_centered_scale + ICUDR_non_centered_loc)
 
     ϕ_hospitalizations = ϕ_hospitalizations_non_centered^-2
-    ϕ_new_seq = ϕ_new_seq_uncentered^-2
     ϕ_new_cases = ϕ_new_cases_non_centered^-2
     ϕ_icu = ϕ_icu_non_centered^-2
     ϕ_new_deaths = ϕ_new_deaths_non_centered^-2
@@ -112,6 +111,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
         logistic_growth_slope = (logit(0.99) - logit(0.01)) / time_to_saturation
         prop_variant_2_fn(x) = logistic.(logistic_growth_intercept .+ logistic_growth_slope .* (x .- logistic_growth_time_offset))
         prop_variant_2 = prop_variant_2_fn(vcat(0, obstimes))
+
+        ϕ_new_seq = ϕ_new_seq_uncentered^-2
     end
 
     if immunity_model == "constant"
@@ -227,7 +228,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     sol = solve(prob, DEAlgorithm; callback=param_callback, saveat=all_solve_times, save_start=true, verbose=false, abstol=abstol, reltol=reltol, u0=u0, p=p, tspan=(0.0, obstimes[end]))
 
-    if sol.retcode != :Success
+    if !SciMLBase.successful_retcode(sol.retcode)
         Turing.@addlogprob! -Inf
         return
     end
@@ -256,7 +257,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     if "seq-informed" ∈ [immunity_model, IHR_model, R₀_model]
         seq_obstimes_index_in_all_solve_times = [findfirst(==(x), sol.t) for x in seq_obstimes_with_init]
-        seq_sol_reg_scale_array = Array(sol)[:, seq_obstimes_index_in_all_solve_times]
+        seq_sol_reg_scale_array = exp.(Array(sol)[:, seq_obstimes_index_in_all_solve_times])
 
         seq_sol_new_cases = seq_sol_reg_scale_array[6, 2:end] - seq_sol_reg_scale_array[6, 1:(end-1)]
         seq_new_cases_mean = seq_sol_new_cases .* ρ_cases
@@ -297,7 +298,6 @@ prob = ODEProblem{true}(seirs_ode_log!,
         HICUR=HICUR,
         ICUDR=ICUDR,
         ϕ_hospitalizations=ϕ_hospitalizations,
-        ϕ_new_seq=ϕ_new_seq,
         ϕ_new_cases=ϕ_new_cases,
         ϕ_icu=ϕ_icu,
         ϕ_new_deaths=ϕ_new_deaths,
@@ -330,7 +330,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
             new_seq_mean=new_seq_mean,
             new_seq_variant_1_mean=new_seq_variant_1_mean,
             new_seq_variant_2_mean=new_seq_variant_2_mean,
-            prop_variant_2=prop_variant_2
+            prop_variant_2=prop_variant_2,
+            ϕ_new_seq=ϕ_new_seq
         ))
     end
 
