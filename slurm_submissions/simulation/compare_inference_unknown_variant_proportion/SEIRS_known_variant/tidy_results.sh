@@ -6,7 +6,7 @@
 #SBATCH -n 1          ## request 1 task (1 CPUs)
 #SBATCH -t 01:00:00   ## 1 hr run time limit
 #SBATCH --mem=3G
-#SBATCH -o tidy_results-%A-%a.out
+#SBATCH -o tidy_results-%A_%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
 #SBATCH --array=20-35

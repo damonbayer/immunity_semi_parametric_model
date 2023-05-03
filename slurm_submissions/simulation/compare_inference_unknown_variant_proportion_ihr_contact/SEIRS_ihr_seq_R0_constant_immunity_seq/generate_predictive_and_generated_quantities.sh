@@ -6,7 +6,7 @@
 #SBATCH -n 1          ## request 4 tasks (4 CPUs)
 #SBATCH -t 00:10:00   ## 2 hr run time limit
 #SBATCH --mem=4G
-#SBATCH -o generate_predictive_and_generated_quantities-%A-%a.out
+#SBATCH -o generate_predictive_and_generated_quantities-%A_%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
 #SBATCH --array=28-37

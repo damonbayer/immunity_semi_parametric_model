@@ -6,7 +6,7 @@
 #SBATCH -n 20          ## request 20 tasks (4 CPUs)
 #SBATCH -t 01:00:00   ## 1 hr run time limit
 #SBATCH --mem=16G
-#SBATCH -o forecast_comparison-%A-%a.out
+#SBATCH -o forecast_comparison-%A_%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
 
