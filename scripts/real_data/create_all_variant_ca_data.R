@@ -8,7 +8,7 @@ library(cowplot)
 library(glue)
 library(outbreakinfo)
 theme_set(cowplot::theme_minimal_grid())
-n_forecast_weeks <- 6
+n_forecast_weeks <- 11
 # global_start_date <- ymd("2021-11-22")
 global_start_date <- ymd("2021-01-01")
 
@@ -262,7 +262,8 @@ create_wave_dataset <- function(target_lineage_collapsed) {
   tmp_shared_constants <- 
     c("time_look_for_second_wave" = unname(tmp_key_times["wave_offset"]),
       "logistic_growth_time_offset" = unname(tmp_key_times["wave_offset"]),
-      "variant_2_import_time" = unname(tmp_key_times["start_seq"])) %>% 
+      "variant_2_import_time" = unname(tmp_key_times["start_seq"]),
+      "date_time_0" = tmp_cdph_data %>% filter(time == 0) %>% pull(end_date) %>% pluck(1) %>% as.character() %>% str_c('"', ., '"')) %>% 
     str_c(names(.), ., sep = " = ")
   
   list(cdph_data = tmp_cdph_data,
@@ -319,6 +320,7 @@ all_lineage_data_tbl %>%
     cdph_data,
     ~{filter(.x, time == 0) %>%
         select(county,
+               cases,
                H = hospitalized,
                ICU = icu,
                D = cumulative_deaths
