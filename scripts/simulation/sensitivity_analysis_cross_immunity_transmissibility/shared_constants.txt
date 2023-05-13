@@ -1,0 +1,5 @@
+variant_2_import_time_fast = 45
+variant_2_import_time_medium = 40
+variant_2_import_time_slow = 35
+first_obs_time = 20
+init_index_to_report = first_obs_time

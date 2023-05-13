@@ -1,0 +1,9 @@
+logistic_growth_time_offset_fast = 27.0
+logistic_growth_time_offset_medium = 23.0
+logistic_growth_time_offset_slow = 21.0
+time_look_for_second_wave_fast = 27.0
+time_look_for_second_wave_medium = 23.0
+time_look_for_second_wave_slow = 21.0
+time_to_saturation_fast = 7.0
+time_to_saturation_medium = 13.0
+time_to_saturation_slow = 24.0
