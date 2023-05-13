@@ -1,6 +1,6 @@
 library(tidyverse)
 library(fs)
-slurm_dir <- "slurm_submissions/simulation/compare_inference_unknown_variant_proportion_ihr_hifi_contact"
+slurm_dir <- "slurm_submissions/real_data/ba1_immunity_contact_cdr/"
 
 tibble(file_path = dir_ls(slurm_dir, recurse = 1, type = "file")) %>% 
   filter(path_file(file_path) == "fit_models.sh") %>% 
@@ -18,6 +18,12 @@ tibble(file_path = dir_ls(slurm_dir, recurse = 1, type = "file")) %>%
 
 tibble(file_path = dir_ls(slurm_dir, recurse = 1, type = "file")) %>% 
   filter(path_file(file_path) == "tidy_results.sh") %>% 
+  pull(file_path) %>% 
+  str_c("sbatch ", .) %>% 
+  cat(sep = "\n")
+
+
+tibble(file_path = dir_ls(slurm_dir, type = "file")) %>% 
   pull(file_path) %>% 
   str_c("sbatch ", .) %>% 
   cat(sep = "\n")

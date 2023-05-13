@@ -117,11 +117,12 @@ model_labels <-
                .x[seq(1, length(.x), by = 2)],
                .x[seq(2, length(.x), by = 2)],
                sep = ": ",
-               collapse = "\n")})) %>% 
+               collapse = "\n")}) %>% 
+           str_replace_all("immunity", "imm")) %>% 
   deframe()
 
-forecast_metrics_to_keep <- 
-  tibble(metric = unique(tidy_posterior_predictive_score_tbl$name)) %>% 
+forecast_metrics_to_keep <-
+  tibble(metric = unique(tidy_posterior_predictive_score_tbl$name) %>% str_replace("log_score", "logs")) %>%
   mutate(ends_binom = str_ends(metric, "_nbinom")) %>% 
   mutate(clean_metric = str_remove(metric, "_nbinom")) %>%
   add_count(clean_metric, name = "replicates") %>% 
@@ -168,15 +169,14 @@ plot_forecast_metrics_comparison <- function(target_target_type) {
     filter(target_type == target_target_type,
            weeks_ahead %in% c(1, 2, 4),
            name %in% forecast_metrics_to_keep) %>%
-    ggplot(aes(model, value, color = model)) +
+    mutate(model_label = model_labels[model]) %>% 
+    ggplot(aes(model_label, value, color = model_label)) +
     facet_grid(name ~ forecast_horizon, scales = "free_y") +
-    geom_boxplot() +
+    geom_boxplot(show.legend = F) +
     geom_hline(yintercept = 0) +
     scale_y_continuous(name = "Value", labels = comma) +
     scale_x_discrete(name = "Model") +
-    theme(legend.position = "bottom",
-          axis.text.x = element_blank()) +
-    scale_color_discrete(name = "Model", labels = function(x) model_labels[x]) +
+    theme(legend.position = "bottom") +
     ggtitle(glue("Forecast Metrics Comparison for {str_to_title(str_replace_all(target_target_type, '_', ' '))}"))
 }
 
