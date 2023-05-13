@@ -20,6 +20,9 @@ source(path(simulation_dir, "computed_shared_constants.txt"))
 # Loading Data ------------------------------------------------------------
 model_table_subset <- read_csv(path(simulation_dir, "model_table.csv")) %>% 
   filter(as.integer(factor(data_takeover_speed)) == target_data_id) %>% 
+  mutate(across(c(immunity_model, `R₀_model`, CDR_model),
+                ~case_when(.x == "seq-informed" ~ "seq",
+                           .x == "constant" ~ "const"))) %>% 
   mutate(model_description = glue("R₀: {`R₀_model`}\nimm: {immunity_model}\nprior: {prior_takeover_speed}") %>% as.character(),
          model_description_one_line = glue("R0_{`R₀_model`}_imm_{immunity_model}_prior_{prior_takeover_speed}") %>% as.character())
 
