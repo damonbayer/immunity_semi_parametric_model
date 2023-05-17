@@ -13,6 +13,13 @@ source(path(simulation_dir, "computed_shared_constants.txt"))
 
 fit_info <- read_csv(path(simulation_dir, "model_table.csv")) %>% filter(fit_id == target_fit_id)
 
+
+chain_to_exclude <- read_csv(path(simulation_dir, "chain_to_exclude.csv")) %>% filter(fit_id == target_fit_id) %>% pull(chain_to_exclude)
+
+if (length(chain_to_exclude) == 0) {
+  chain_to_exclude <- -1  
+}
+
 variant_2_import_time <- case_when(
   fit_info[["data_takeover_speed"]] == "slow" ~ variant_2_import_time_slow,
   fit_info[["data_takeover_speed"]] == "medium" ~ variant_2_import_time_medium,
@@ -61,10 +68,14 @@ posterior_predictive_path <-
        ext = "csv")
 
 
-prior_generated_quantities <- read_csv_as_draws(prior_generated_quantities_path)
-posterior_generated_quantities <- read_csv_as_draws(posterior_generated_quantities_path)
-prior_predictive <- read_csv_as_draws(prior_predictive_path)
-posterior_predictive <- read_csv_as_draws(posterior_predictive_path)
+prior_generated_quantities <- read_csv_as_draws(prior_generated_quantities_path) %>% 
+  filter(.chain != chain_to_exclude)
+posterior_generated_quantities <- read_csv_as_draws(posterior_generated_quantities_path) %>% 
+  filter(.chain != chain_to_exclude)
+prior_predictive <- read_csv_as_draws(prior_predictive_path) %>% 
+  filter(.chain != chain_to_exclude)
+posterior_predictive <- read_csv_as_draws(posterior_predictive_path) %>% 
+  filter(.chain != chain_to_exclude)
 
 tidy_prior_generated_quantities <- 
   prior_generated_quantities %>% 
