@@ -125,6 +125,15 @@ tidy_posterior_peak <-
   select(-result_type, -file_path) %>%
   mutate(name = str_remove(name, "data+_"))
 
+tidy_posterior_peak_score <-
+  results_tbl %>%
+  filter(result_type == "peak_score") %>% 
+  mutate(peak_score = future_map(file_path, read_csv)) %>%
+  unnest(peak_score) %>% 
+  select(-result_type, -file_path) %>% 
+  select(-fit_id) %>% 
+  pivot_longer(cols = -c(distribution, model, target_type))
+
 all_target_types <- unique(tidy_predictive_tbl$name)
 all_model_description_one_lines <- unique(model_table_subset$model_description_one_line)
 all_peak_types <- unique(tidy_posterior_peak$peak_type)
@@ -336,7 +345,8 @@ plot_peak_assessment <- function(target_peak_type){
     true_peak_dat %>%
     filter(peak_type == target_peak_type) %>%
     expand_grid(tmp_tidy_posterior_peak %>%
-                  distinct(max_t))
+                  distinct(max_t)) %>% 
+    filter(name %in% tmp_tidy_posterior_peak$name)
 
   ggplot(mapping = aes(max_t, value)) +
     facet_grid(name ~ model_description,
@@ -350,6 +360,23 @@ plot_peak_assessment <- function(target_peak_type){
     scale_x_continuous("Forecast Date") +
     ggtitle(glue("Posterior Peak {str_to_title(target_peak_type)}"),
             subtitle = glue("{str_to_title(target_data_takeover_speed)} Takeover Data"))
+}
+
+plot_peak_metrics <- function(target_peak_type) {
+  tidy_posterior_peak_score %>% 
+    filter(target_type == target_peak_type) %>% 
+    rename(fit_id = model) %>% 
+    left_join(model_table_subset, by = "fit_id") %>% 
+    ggplot(aes(model_description, value, color = model_description)) +
+    facet_wrap(~name, scales = "free_y") +
+    geom_boxplot(show.legend = F) +
+    geom_hline(yintercept = 0) +
+    scale_y_continuous(name = "Value", labels = comma) +
+    scale_x_discrete(name = "Model") +
+    theme(legend.position = "bottom") +
+    ggtitle(glue("Peak Metrics Comparison for {str_to_title(str_replace_all(target_peak_type, '_', ' '))}"),
+            subtitle = glue("{str_to_title(target_data_takeover_speed)} Takeover Data"))
+  
 }
 
 # Create Figures ----------------------------------------------------------
@@ -418,6 +445,12 @@ peak_assessment_plots <-
   tibble(target_peak_type = all_peak_types) %>%
   mutate(file_path = path("figures", experiment_name, glue("takeover_speed_{target_data_takeover_speed}"), glue("peak_assessment_{target_peak_type}_plot"), ext = "pdf"),
          figure = future_map(target_peak_type, plot_peak_assessment)) %>%
+  augment_figure_tbl()
+
+peak_metrics_plots <-
+  tibble(target_peak_type = all_peak_types) %>%
+  mutate(file_path = path("figures", experiment_name, glue("takeover_speed_{target_data_takeover_speed}"), glue("peak_metrics_{target_peak_type}_plot"), ext = "pdf"),
+         figure = future_map(target_peak_type, plot_peak_metrics)) %>%
   augment_figure_tbl()
 
 compute_time_plot <- 

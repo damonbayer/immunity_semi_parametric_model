@@ -12,7 +12,7 @@ using Interpolations
 using LinearAlgebra
 using FillArrays
 using immunity_semi_parametric_model
-n_forecast_weeks = 10
+n_forecast_weeks = 4
 experiment_name = "sensitivity_analysis_cross_immunity_transmissibility"
 datadir(args...) = projectdir("data", "simulation", experiment_name, args...)
 simulationdir(args...) = projectdir("scripts", "simulation", experiment_name, args...)

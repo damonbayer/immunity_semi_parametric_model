@@ -68,6 +68,18 @@ posterior_predictive_path <-
        ext = "csv")
 
 
+seq_hospitalizations_path <- path(results_dir,
+     "posterior_predictive_seq_hospitalizations_csv",
+     str_c("posterior_predictive_seq_hospitalizations_fit_id=", fit_info[["fit_id"]]),
+     ext = "csv")
+
+seq_hospitalization_mean_path <- 
+  path(results_dir,
+     "posterior_generated_quantities_seq_hospitalization_mean_csv",
+     str_c("posterior_generated_quantities_seq_hospitalization_mean_fit_id=", fit_info[["fit_id"]]),
+     ext = "csv")
+
+
 prior_generated_quantities <- read_csv_as_draws(prior_generated_quantities_path) %>% 
   filter(.chain != chain_to_exclude)
 posterior_generated_quantities <- read_csv_as_draws(posterior_generated_quantities_path) %>% 
@@ -75,6 +87,10 @@ posterior_generated_quantities <- read_csv_as_draws(posterior_generated_quantiti
 prior_predictive <- read_csv_as_draws(prior_predictive_path) %>% 
   filter(.chain != chain_to_exclude)
 posterior_predictive <- read_csv_as_draws(posterior_predictive_path) %>% 
+  filter(.chain != chain_to_exclude)
+seq_hospitalizations <- read_csv_as_draws(seq_hospitalizations_path) %>% 
+  filter(.chain != chain_to_exclude)
+seq_hospitalization_mean <- read_csv_as_draws(seq_hospitalization_mean_path) %>% 
   filter(.chain != chain_to_exclude)
 
 tidy_prior_generated_quantities <- 
@@ -115,11 +131,12 @@ tidy_posterior_predictive <-
 
 # Peak --------------------------------------------------------------------
 est_peak_time <-
-  posterior_generated_quantities %>%
-  select(starts_with("."), matches("mean")) %>%
-  select(-matches("seq")) %>%
-  tidy_format_draws_time() %>%
-  filter(time > time_look_for_second_wave) %>%
+  seq_hospitalization_mean %>%
+  tidy_format_draws_time() %>% 
+  mutate(time = if_else(str_detect(name, "seq"),
+                        variant_2_import_time - first_obs_time + (time - 1) / 7,
+                        time)) %>% 
+  filter(time > time_look_for_second_wave) %>% 
   select(.draw, value, name, time) %>%
   group_by(.draw, name) %>%
   filter(value - lag(value) > 0) %>%
@@ -131,13 +148,21 @@ est_peak_time <-
            str_remove("_mean") %>%
            str_c("data_", .))
 
-tidy_posterior_peak <-
-  posterior_predictive %>%
+posterior_peak <-
+  seq_hospitalizations %>%
   tidy_format_draws_time() %>%
-  select(.draw, name, value, time) %>%
+  mutate(time = if_else(str_detect(name, "seq"),
+                        variant_2_import_time - first_obs_time + (time - 1) / 7,
+                        time)) %>% 
+  select(.draw, name, value, time) %>% 
   right_join(est_peak_time %>% rename(time = peak_time)) %>%
-  select(name, value, time) %>%
-  pivot_longer(-name, names_to = "peak_type") %>%
+  select(.draw, name, value, time) %>%
+  pivot_longer(-c(.draw, name), names_to = "peak_type") %>% 
+  mutate(name = str_remove(name, "seq_"))
+
+tidy_posterior_peak <- 
+  posterior_peak %>% 
+  select(-starts_with(".")) %>% 
   group_by(name, peak_type) %>%
   median_qi(.width = c(0.5, 0.8, 0.95))
 
@@ -210,12 +235,34 @@ posterior_predictive_score_kd <-
 posterior_predictive_score <- full_join(posterior_predictive_score_kd,
                                         posterior_predictive_score_nbinom)
 
+true_peak_dat <-
+  dat_tidy %>%
+  filter(time > time_look_for_second_wave,
+         !str_detect(name, "variant")) %>%
+  group_by(name) %>%
+  rename(value = true_value) %>% 
+  filter(value == max(value)) %>%
+  slice(1) %>%
+  ungroup() %>%
+  pivot_longer(-name, names_to = "peak_type") %>% 
+  filter(name == "data_hospitalizations")
+
+posterior_peak_score <-
+  posterior_peak %>%
+  rename(prediction = value) %>% 
+  left_join(true_peak_dat) %>% 
+  mutate(model = fit_info[["fit_id"]]) %>%
+  select(model, target_type = peak_type, prediction, sample = .draw, true_value = value) %>% 
+  score_with_override(override = "continuous") %>%
+  as_tibble()
+
 dir_create(path(results_dir, "tidy_prior_generated_quantities"))
 dir_create(path(results_dir, "tidy_posterior_generated_quantities"))
 dir_create(path(results_dir, "tidy_prior_predictive"))
 dir_create(path(results_dir, "tidy_posterior_predictive"))
 dir_create(path(results_dir, "posterior_predictive_score"))
 dir_create(path(results_dir, "tidy_posterior_peak"))
+dir_create(path(results_dir, "posterior_peak_score"))
 
 write_csv(tidy_prior_generated_quantities, file = path(results_dir, "tidy_prior_generated_quantities", str_c("tidy_prior_generated_quantities_fit_id=", fit_info[["fit_id"]]), ext = "csv"))
 write_csv(tidy_posterior_generated_quantities, file = path(results_dir, "tidy_posterior_generated_quantities", str_c("tidy_posterior_generated_quantities_fit_id=", fit_info[["fit_id"]]), ext = "csv"))
@@ -223,3 +270,4 @@ write_csv(tidy_prior_predictive, file = path(results_dir, "tidy_prior_predictive
 write_csv(tidy_posterior_predictive, file = path(results_dir, "tidy_posterior_predictive", str_c("tidy_posterior_predictive_fit_id=", fit_info[["fit_id"]]), ext = "csv"))
 write_csv(posterior_predictive_score, file = path(results_dir, "posterior_predictive_score", str_c("posterior_predictive_score_fit_id=", fit_info[["fit_id"]]), ext = "csv"))
 write_csv(tidy_posterior_peak, file = path(results_dir, "tidy_posterior_peak", str_c("tidy_posterior_peak_fit_id=", fit_info[["fit_id"]]), ext = "csv"))
+write_csv(posterior_peak_score, file = path(results_dir, "posterior_peak_score", str_c("posterior_peak_score_fit_id=", fit_info[["fit_id"]]), ext = "csv"))
