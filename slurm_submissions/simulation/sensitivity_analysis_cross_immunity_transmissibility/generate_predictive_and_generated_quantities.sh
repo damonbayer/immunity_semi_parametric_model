@@ -15,9 +15,9 @@ module purge
 module load julia/1.8.5
 cd //pub/bayerd/immunity_semi_parametric_model/
 
-# if [ $SLURM_ARRAY_TASK_ID == 1 ]; then
-# sbatch --depend=afterany:$SLURM_ARRAY_JOB_ID slurm_submissions/simulation/sensitivity_analysis_cross_immunity_transmissibility/tidy_results.sh
-# fi
+if [ $SLURM_ARRAY_TASK_ID == 1 ]; then
+sbatch --depend=afterany:$SLURM_ARRAY_JOB_ID slurm_submissions/simulation/sensitivity_analysis_cross_immunity_transmissibility/tidy_results.sh
+fi
 
 julia --project scripts/simulation/sensitivity_analysis_cross_immunity_transmissibility/generate_predictive_and_generated_quantities.jl $SLURM_ARRAY_TASK_ID
 julia --project scripts/simulation/sensitivity_analysis_cross_immunity_transmissibility/generate_peak_quantities.jl $SLURM_ARRAY_TASK_ID
