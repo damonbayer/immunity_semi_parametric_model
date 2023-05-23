@@ -8,7 +8,7 @@ library(cowplot)
 library(glue)
 library(outbreakinfo)
 theme_set(cowplot::theme_minimal_grid())
-n_forecast_weeks <- 11
+n_forecast_weeks <- 21
 # global_start_date <- ymd("2021-11-22")
 global_start_date <- ymd("2021-01-01")
 
@@ -180,7 +180,17 @@ ca_seq_augmented <-
   select(-data) %>% 
   unnest(date_summaries)
 
-ca_seq_augmented %>% 
+lineage_collapsed_in_order <- 
+  ca_seq_augmented %>% 
+  group_by(lineage_collapsed) %>% 
+  summarize(peak_date = date[.fitted == max(.fitted)]) %>% 
+  arrange(peak_date) %>% 
+  pull(lineage_collapsed) %>% 
+  as.character()
+
+ca_lineage_prop_plot <- 
+  ca_seq_augmented %>% 
+  mutate(lineage_collapsed = fct_relevel(lineage_collapsed, lineage_collapsed_in_order)) %>% 
   ggplot(aes(x = date, color = lineage_collapsed)) +
   geom_point(mapping = aes(y = prop_lineage), alpha = 0.25) +
   geom_line(mapping = aes(y = .fitted)) +
@@ -241,6 +251,21 @@ create_wave_dataset <- function(target_lineage_collapsed) {
     select(-lineage_collapsed) %>% 
     left_join(select(county_id_pop, id, county))
   
+  # tmp_peak_hospitalization <- 
+  #   full_cdph_dat %>% 
+  #   filter(date >= tmp_key_dates["start_date"],
+  #          date <= tmp_key_dates["end_date"]) %>% 
+  #   mutate(time = floor(as.numeric(date - tmp_key_dates["start_date"]) / time_interval_in_days)) %>% 
+  #   select(county, date, hospitalized) %>% 
+  #   group_by(county) %>% 
+  #   filter(date > tmp_key_dates["wave_start"]) %>% 
+  #   filter(hospitalized == max(hospitalized[date > tmp_key_dates["wave_start"]])) %>% 
+  #   slice(1) %>% 
+  #   ungroup() %>% 
+  #   left_join(select(county_id_pop, id, county)) %>% 
+  #   select(id, county, date, hospitalized)
+  # 
+  
   tmp_cdph_data <- 
     full_cdph_dat %>% 
     filter(date >= tmp_key_dates["start_date"],
@@ -268,6 +293,7 @@ create_wave_dataset <- function(target_lineage_collapsed) {
   
   list(cdph_data = tmp_cdph_data,
        seq_data = tmp_seq_data,
+       # peak_hospitalization = tmp_peak_hospitalization,
        shared_constants = tmp_shared_constants)
 }
 
@@ -361,3 +387,5 @@ all_lineage_figure_tbl %>%
   walk(~system2("pdfunite", args = .x))
 
 file_delete(all_lineage_figure_tbl$file_path)
+
+save_plot(filename = path("figures", "data", "real_data", "ca_lineage_prop_plot", ext = "pdf"), plot = ca_lineage_prop_plot, device = cairo_pdf, base_height = 6)

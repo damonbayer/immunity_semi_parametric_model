@@ -61,8 +61,3 @@ data_new_seq_variant_1_forecast = data_new_seq_variant_1_full[1:l_seq_forecast]
 data_new_seq_variant_2_forecast = data_new_seq_variant_2_full[1:l_seq_forecast]
 missing_data_new_seq_variant_1_forecast = Array{Union{Missing, Int64}}(missing, l_seq_forecast)
 missing_data_new_seq_variant_2_forecast = Array{Union{Missing, Int64}}(missing, l_seq_forecast)
-
-data_seq_hospitalizations_full = data_new_seq_variant_2_full # just for peak hospitalization
-data_seq_hospitalizations = data_seq_hospitalizations_full[1:l_seq] # just for peak hospitalization
-data_seq_hospitalizations_forecast = data_seq_hospitalizations_full[1:l_seq_forecast] # just for peak hospitalization
-missing_data_seq_hospitalizations_forecast = Array{Union{Missing, Int64}}(missing, l_seq_forecast) # just for peak hospitalization
