@@ -1,0 +1,56 @@
+library(tidyverse)
+source("src/immunity_semi_parametric_model.R")
+library(latex2exp)
+library(fs)
+
+alpha_2_choices <- c(0.1, 0.3, 1, 3, 10)
+max_dur_choice <- 100
+alpha_1_star_choice <- 0.5
+
+annotation_data <-
+  tibble(
+    x = c(0.05, 0.5),
+    y = c(max_dur_choice * alpha_1_star_choice, max_dur_choice),
+    label = TeX(c(
+      r'($\exp\left(\alpha_0\right) \alpha^*_1$)',
+      r'($\exp\left(\alpha_0\right)$)'
+    ))
+  )
+
+example_immune_durration_plot <-
+  expand_grid(
+    max_dur = max_dur_choice,
+    alpha_2 = alpha_2_choices,
+    alpha_1_star = alpha_1_star_choice
+  ) %>%
+  mutate(
+    alpha_0 = log(max_dur),
+    alpha_1 = 4^alpha_2 * log(alpha_1_star)
+  ) %>%
+  expand_grid(x = seq(0, 1, length.out = 1001)) %>%
+  mutate(dur = exp(alpha_0 + alpha_1 * (x * (1 - x))^alpha_2)) %>%
+  ggplot(aes(x, dur, color = factor(alpha_2), group = alpha_2)) +
+  geom_hline(
+    data = annotation_data,
+    mapping = aes(yintercept = y),
+    linetype = "dashed",
+    color = "gray30"
+  ) +
+  geom_text(
+    data = annotation_data,
+    mapping = aes(x, y, label = label),
+    parse = TRUE,
+    inherit.aes = F, vjust = "inward"
+  ) +
+  geom_line() +
+  theme_cowplot() +
+  scale_x_continuous(TeX(r"($\delta$)"), labels = percent) +
+  scale_y_continuous(TeX(r"($1 / \kappa(\delta)$)")) +
+  scale_color_discrete(TeX(r'($\alpha_2$)')) +
+  ggtitle(
+    # label = TeX(r"(Example $1 / \kappa(\delta) = \exp \left{\alpha_0 + \alpha_1 \left[ \delta \left( 1 - \delta \right)^{\alpha_2} \right]\right}$)"),
+    label = "Example Immune Duration Curves",
+    subtitle = TeX(sprintf(r'($\alpha_0 = \ln\left(%d\right)$, $\alpha^*_1 = %.1f)', max_dur_choice, alpha_1_star_choice))
+  )
+
+save_plot(filename = path(manuscript_figure_dir, "example_immune_durration_plot", ext = "pdf"), plot = example_immune_durration_plot, base_height = 4)

@@ -5,6 +5,8 @@ library(scoringutils)
 library(cowplot)
 library(scales)
 
+manuscript_figure_dir <- "~/Documents/dissertation/figures/ch_5"
+
 theme_set(theme_minimal_grid())
 
 
