@@ -4,11 +4,11 @@ library(posterior)
 library(scoringutils)
 library(cowplot)
 library(scales)
+library(glue)
 
 manuscript_figure_dir <- "~/Documents/dissertation/figures/ch_5"
 
 theme_set(theme_minimal_grid())
-
 
 my_theme <- list(
   scale_fill_brewer(name = "Credible Interval Width",
@@ -122,3 +122,21 @@ score_with_override <- function (data, metrics = NULL, override = NULL, ...) {
 }
 
 gg_facet_dims <- function(p) apply(X = ggplot_build(p)$layout$layout[,c("ROW", "COL")], MARGIN = 2, max)
+
+data_order <- c(
+  "data_new_cases",
+  "data_hospitalizations",
+  "data_icu",
+  "data_new_deaths",
+  "data_new_seq_variant_2",
+  "data_new_seq_variant_1")
+
+my_labeller <- c(
+  "data_new_cases" = "New Cases",
+  "data_hospitalizations" = "Hospital Occupancy",
+  "data_icu" = "ICU Occupancy",
+  "data_new_deaths" = "New Deaths",
+  "data_new_seq_variant_2" = "Novel Variant Sequences",
+  "data_new_seq_variant_1" = "Other Variant Sequences")
+
+my_labeller_fn <- as_labeller(function(string) TeX(my_labeller, output = "expression")[string], label_parsed)
