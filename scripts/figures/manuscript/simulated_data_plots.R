@@ -67,7 +67,7 @@ simulated_binned_data_plots_tbl <-
 simulated_binned_data_plots_tbl %>% 
   select(file_path, figure, n_col, n_row) %>% 
   as.list() %>% 
-  pwalk(~save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4))
+  pwalk(~save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_height = 3))
 
 
 all_generated_quantities <- 
@@ -108,4 +108,3 @@ save_plot(filename = path(manuscript_figure_dir, "proportion_novel_variant_simul
           plot = proportion_novel_variant_simulated_data_plot,
           base_height = 4,
           base_asp = 1.75)
-%>% 
