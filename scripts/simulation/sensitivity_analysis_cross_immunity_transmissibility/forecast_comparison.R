@@ -376,7 +376,6 @@ plot_peak_metrics <- function(target_peak_type) {
     theme(legend.position = "bottom") +
     ggtitle(glue("Peak Metrics Comparison for {str_to_title(str_replace_all(target_peak_type, '_', ' '))}"),
             subtitle = glue("{str_to_title(target_data_takeover_speed)} Takeover Data"))
-  
 }
 
 # Create Figures ----------------------------------------------------------

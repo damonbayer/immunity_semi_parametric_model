@@ -5,7 +5,8 @@ library(scoringutils)
 library(cowplot)
 library(scales)
 library(glue)
-
+library(fs)
+library(latex2exp)
 manuscript_figure_dir <- "~/Documents/dissertation/figures/ch_5"
 
 theme_set(theme_minimal_grid())
@@ -131,12 +132,24 @@ data_order <- c(
   "data_new_seq_variant_2",
   "data_new_seq_variant_1")
 
-my_labeller <- c(
+my_sim_labeller <- c(
   "data_new_cases" = "New Cases",
   "data_hospitalizations" = "Hospital Occupancy",
   "data_icu" = "ICU Occupancy",
   "data_new_deaths" = "New Deaths",
   "data_new_seq_variant_2" = "Novel Variant Sequences",
   "data_new_seq_variant_1" = "Other Variant Sequences")
+
+my_sim_labeller_fn <- as_labeller(my_sim_labeller)
+
+my_real_labeller <- c(
+  "data_new_cases" = "New Cases",
+  "data_hospitalizations" = "Hospital Occupancy",
+  "data_icu" = "ICU Occupancy",
+  "data_new_deaths" = "New Deaths",
+  "data_new_seq_variant_2" = "BA.1 Variant Sequences",
+  "data_new_seq_variant_1" = "Other Variant Sequences")
+
+my_real_labeller_fn <- as_labeller(my_real_labeller)
 
 my_labeller_fn <- as_labeller(function(string) TeX(my_labeller, output = "expression")[string], label_parsed)

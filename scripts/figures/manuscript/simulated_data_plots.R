@@ -50,7 +50,7 @@ simulated_binned_data_plots_tbl <-
   ungroup() %>% 
   mutate(figure = pmap(list(takeover_speed, first_forecast_target_t, last_forecast_target_t, data), ~{
     ggplot(..4, aes(time, value)) +
-      facet_wrap(~name, scales = "free_y", labeller = as_labeller(my_labeller)) +
+      facet_wrap(~name, scales = "free_y", labeller = my_sim_labeller_fn) +
       annotate("rect", xmin = ..2, xmax = ..3, ymin = -Inf, ymax = Inf, alpha = 0.5) +
       geom_point() +
       geom_line() +
@@ -68,7 +68,6 @@ simulated_binned_data_plots_tbl %>%
   select(file_path, figure, n_col, n_row) %>% 
   as.list() %>% 
   pwalk(~save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1, base_height = 3))
-
 
 all_generated_quantities <- 
   file_path_tbl %>% 
@@ -97,7 +96,7 @@ proportion_novel_variant_simulated_data_plot <-
              alpha = 0.5,
              show.legend = F) +
   geom_line() +
-  scale_y_continuous(TeX(r"(Proportion Novel Variant $\left( \delta(t) \right))"),
+  scale_y_continuous(TeX(r"(Proportion Novel Variant $\left( \delta(t) \right)$)"),
                      labels = percent) +
   scale_x_continuous("Time") +
   scale_color_discrete("Novel Variant Takeover Speed", labels = str_to_title) +
