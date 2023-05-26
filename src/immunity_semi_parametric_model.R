@@ -11,6 +11,8 @@ manuscript_figure_dir <- "~/Documents/dissertation/figures/ch_5"
 
 theme_set(theme_minimal_grid())
 
+county_labeller <- function(x) if_else(x == 'California', x, glue('{x} County'))
+
 my_theme <- list(
   scale_fill_brewer(name = "Credible Interval Width",
                     labels = ~percent(as.numeric(.))),
