@@ -33,7 +33,8 @@ model_table <- read_csv(path(simulation_dir, "model_table.csv")) %>%
   filter(is.na(prior_takeover_speed) | prior_takeover_speed == "wide") %>%
   mutate(
     model_description_one_line = glue("R0_{`R₀_model`}_imm_{immunity_model}") %>% as.character(),
-    model_description = glue("$R_0(t)$: {`R₀_model`}, $1/\\kappa(t)$: {immunity_model}") %>% TeX(output = "character")
+    # model_description = glue("$R_0(t)$: {`R₀_model`}, $1/\\kappa(t)$: {immunity_model}") %>% TeX(output = "character")
+    model_description = glue("atop(R[0](t):~{`R₀_model`}, 1 / kappa(t):~{immunity_model})")
   ) %>% 
   mutate(
     variant_2_import_time = case_when(
@@ -251,7 +252,7 @@ plot_crps_comparison <- function(target_target_type) {
     geom_point(alpha = 0.8) +
     scale_x_continuous("Forecast Time") +
     scale_y_continuous("CRPS", labels = comma) +
-    scale_color_discrete("Model", labels = parse_format()) +
+    scale_color_discrete("Model", labels = label_parse()) +
     ggtitle(glue("Continuous Ranked Probability Score for {my_sim_labeller[target_target_type]}")) +
     theme(
       legend.position = "bottom",
@@ -259,6 +260,33 @@ plot_crps_comparison <- function(target_target_type) {
     ) #+
     # guides(col = guide_legend(ncol = 1))
 }
+
+plot_crps_comparison_boxplot <- function(target_target_type) {
+  tidy_posterior_predictive_score_tbl %>%
+    filter(
+      target_type == target_target_type,
+      weeks_ahead %in% c(1, 2, 4),
+      name == "crps_nbinom"
+    ) %>%
+    left_join(model_table) %>%
+    select(weeks_ahead, value, max_t, forecast_horizon, model_description, data_takeover_speed) %>%
+    ggplot(aes(model_description, value, color = model_description)) +
+    facet_grid2(forecast_horizon~data_takeover_speed,
+                independent = "y",
+                scales = "free",
+                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"))
+    ) +
+    geom_boxplot(show.legend = F) +
+    geom_beeswarm(alpha = 0.5, show.legend = F) +
+    scale_y_continuous("CRPS", labels = comma) +
+    scale_x_discrete("Model", labels = label_parse()) +
+    ggtitle(glue("Continuous Ranked Probability Score for {my_sim_labeller[target_target_type]}")) +
+    theme(
+      legend.position = "bottom",
+      legend.text.align = 0
+    )
+}
+  
 
 plot_peak_assessment <- function(target_peak_type) {
   true_peak_time <-
@@ -358,7 +386,7 @@ plot_peak_crps <- function(target_peak_type) {
     geom_point() +
     scale_x_continuous("Forecast Time") +
     scale_y_continuous("CRPS", labels = comma) +
-    scale_color_discrete("Model", labels = parse_format()) +
+    scale_color_discrete("Model", labels = label_parse()) +
     ggtitle(glue("Continuous Ranked Probability Score for Peak {my_sim_labeller[target_target_type]} {str_to_title(target_peak_type)}")) +
     theme(legend.position = "bottom")
     # theme(legend.text.align = 0)
@@ -391,6 +419,14 @@ crps_comparison_plots <-
   ) %>%
   augment_figure_tbl()
 
+crps_comparison_boxplot_plots <-
+  tibble(target_type = all_target_types) %>%
+  mutate(
+    file_path = path(manuscript_figure_dir, glue("simulated_crps_comparison_boxplot_{target_type}_plot"), ext = "pdf"),
+    figure = future_map(target_type, plot_crps_comparison_boxplot)
+  ) %>%
+  augment_figure_tbl()
+
 peak_assessment_plots <-
   tibble(peak_type = all_peak_types) %>%
   mutate(
@@ -413,6 +449,10 @@ forecast_comparison_plots %>%
   pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75))
 
 crps_comparison_plots %>%
+  as.list() %>%
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4))
+
+crps_comparison_boxplot_plots %>% 
   as.list() %>%
   pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4))
 
