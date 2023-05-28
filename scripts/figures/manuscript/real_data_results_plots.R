@@ -3,6 +3,7 @@ library(glue)
 library(fs)
 library(furrr)
 library(ggh4x)
+library(ggbeeswarm)
 source("src/immunity_semi_parametric_model.R")
 options("parallelly.fork.enable" = TRUE)
 plan(multicore)
@@ -130,7 +131,7 @@ tidy_posterior_predictive_score_tbl <-
   unnest(tidy_predictive_score) %>%
   select(-c(result_type, file_path, fit_id, date)) %>%
   pivot_longer(cols = -c(distribution, model, target_type, weeks_ahead)) %>%
-  mutate(forecast_horizon = str_c(weeks_ahead, " Week Forecast Horizon")) %>%
+  mutate(forecast_horizon = str_c(weeks_ahead, " Week Horizon")) %>%
   rename(fit_id = model)
 
 tidy_posterior_peak <-
@@ -169,7 +170,6 @@ forecast_metrics_to_keep <-
   pull(metric) %>%
   sort()
 
-
 # Plot functions ----------------------------------------------------------
 plot_forecast_comparison <- function(target_type, target_county) {
   tmp_tidy_posterior_predictive <-
@@ -191,13 +191,14 @@ plot_forecast_comparison <- function(target_type, target_county) {
     facet_grid(weeks_ahead ~ model_description,
                scale = "free_y",
                labeller = labeller(
-                 weeks_ahead = as_labeller(~ str_c(., " Week", if_else(. == 1, "", "s"), " Ahead Forecasts")),
+                 weeks_ahead = as_labeller(~ str_c(., " Week", if_else(. == 1, "", "s"), " Ahead")),
                  model_description = label_parsed
                )
     ) +
     geom_lineribbon(
       data = tmp_tidy_posterior_predictive,
-      mapping = aes(ymin = .lower, ymax = .upper), step = "mid"
+      mapping = aes(ymin = .lower, ymax = .upper), step = "mid",
+      color = brewer_line_color
     ) +
     geom_point(data = tmp_tidy_posterior_predictive %>%
                  group_by(weeks_ahead) %>%
@@ -233,16 +234,16 @@ plot_crps_comparison <- function(target_target_type) {
                 scales = "free",
                 labeller = labeller(county = ~glue("{county_labeller(.x)} Data"))
     ) +
-    stat_smooth(
-      geom = "line",
-      formula = y ~ 1,
-      method = "lm",
-      se = F,
-      linetype = "dashed",
-      alpha = 1.0
-    ) +
-    geom_line(alpha = 0.8) +
-    geom_point(alpha = 0.8) +
+    # stat_smooth(
+    #   geom = "line",
+    #   formula = y ~ 1,
+    #   method = "lm",
+    #   se = F,
+    #   linetype = "dashed",
+    #   alpha = 1.0
+    # ) +
+    geom_line() +
+    geom_point() +
     scale_x_date(name = "Forecast Date", date_labels = "%b %d", breaks = unique(tmp_dat$max_date)) +
     scale_y_continuous("CRPS", labels = comma) +
     scale_color_discrete("Model", labels = label_parse()) +
@@ -343,7 +344,7 @@ plot_peak_assessment <- function(target_peak_type) {
     ggtitle(glue("Posterior Peak Hospital Occupancy {str_to_title(target_peak_type)}"))
 }
 
-plot_peak_crps <- function(target_peak_type) {
+plot_peak_crps <- function(x = NULL) {
   true_peak_time <-
     true_peak_dat %>%
     filter(
@@ -356,34 +357,57 @@ plot_peak_crps <- function(target_peak_type) {
   
   tmp_dat <- 
     tidy_posterior_peak_score %>%
-    filter(target_type == target_peak_type) %>%
     filter(name == "crps") %>%
     rename(fit_id = model) %>%
     left_join(model_table) %>%
     mutate(max_date = time_to_date(max_t))
   
   ggplot(tmp_dat, aes(max_date, value, color = model_description)) +
-    facet_wrap(~county,
-               scales = "free", ncol = 1,
-               labeller = labeller(county = ~glue("{county_labeller(.x)} Data"), model_description = label_parsed)) +
-    stat_smooth(
-      geom = "line",
-      formula = y ~ 1,
-      method = "lm",
-      se = F,
-      linetype = "dashed",
-      alpha = 1
-    ) +
-    geom_text(data = true_peak_time, mapping = aes(x = max_date, y = Inf, label = "\nTrue Peak Date "), inherit.aes = F, vjust = "inward", hjust = "inward") +
+    facet_grid2(target_type~county,
+                scales = "free", independent = "y",
+               labeller = labeller(county = ~glue("{county_labeller(.x)} Data"),
+                                   target_type = ~glue("Peak {str_to_title(.x)}"))) +
+    # stat_smooth(
+    #   geom = "line",
+    #   formula = y ~ 1,
+    #   method = "lm",
+    #   se = F,
+    #   linetype = "dashed",
+    #   alpha = 1
+    # ) +
+    geom_text(data = true_peak_time %>% 
+                filter(county == "California") %>% 
+                mutate(target_type = "time"),
+              mapping = aes(x = max_date, y = 1.5, label = "\nTrue Peak Date "), inherit.aes = F, vjust = "inward", hjust = "inward") +
     geom_vline(data = true_peak_time, mapping = aes(xintercept = max_date), linetype = "dashed") +
-    geom_line(alpha = 0.8) +
-    geom_point(alpha = 0.8) +
+    geom_line() +
     geom_point() +
     scale_x_date(name = "Forecast Date", date_labels = "%b %d", breaks = unique(tmp_dat$max_date)) +
     scale_y_continuous("CRPS", labels = comma) +
     scale_color_discrete("Model", labels = label_parse()) +
-    ggtitle(glue("Continuous Ranked Probability Score for Peak {my_sim_labeller[target_target_type]} {str_to_title(target_peak_type)}")) +
+    ggtitle(glue("Continuous Ranked Probability Score for Peak Hospitalization")) +
     theme(legend.position = "bottom")
+}
+
+plot_peak_crps_boxplot <- function(x = NULL) {
+  tidy_posterior_peak_score %>%
+    filter(name == "crps") %>%
+    rename(fit_id = model) %>%
+    left_join(model_table) %>%
+    ggplot(aes(model_description, value, color = model_description)) +
+    facet_grid2(target_type~county,
+                scales = "free", independent = "y",
+                labeller = labeller(county = ~glue("{county_labeller(.x)}"),
+                                    target_type = ~glue("Peak {str_to_title(.x)}"))) +
+    geom_boxplot(show.legend = F) +
+    geom_beeswarm(alpha = 0.5, show.legend = F) +
+    scale_y_continuous("CRPS", labels = comma) +
+    scale_x_discrete("Model", labels = label_parse()) +
+    ggtitle(glue("Continuous Ranked Probability Score for Peak Hospitalization")) +
+    theme(
+      legend.position = "bottom",
+      legend.text.align = 0
+    )
 }
 
 # Create Figures ----------------------------------------------------------
@@ -430,30 +454,42 @@ peak_assessment_plots <-
   augment_figure_tbl()
 
 peak_crps_plots <-
-  tibble(peak_type = all_peak_types) %>%
+  tibble(x = 1) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_{peak_type}_{target_county}_plot"), ext = "pdf"),
-    figure = future_map(peak_type, plot_peak_crps)
+    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_plot"), ext = "pdf"),
+    figure = future_map(x, plot_peak_crps)
+  ) %>%
+  augment_figure_tbl()
+
+peak_crps_boxplot_plots <-
+  tibble(x = 1) %>%
+  mutate(
+    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_boxplot_plot"), ext = "pdf"),
+    figure = future_map(x, plot_peak_crps_boxplot)
   ) %>%
   augment_figure_tbl()
 
 # Save figures ------------------------------------------------------------
 forecast_comparison_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75, base_height = 2.25))
 
 crps_comparison_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
 
 crps_comparison_boxplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
 
 peak_assessment_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
 
 peak_crps_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2.75))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
+
+peak_crps_boxplot_plots %>% 
+  as.list() %>%
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))

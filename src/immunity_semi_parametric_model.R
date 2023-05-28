@@ -10,7 +10,7 @@ library(latex2exp)
 manuscript_figure_dir <- "~/Documents/dissertation/figures/ch_5"
 
 theme_set(theme_minimal_grid())
-
+brewer_line_color <- "#08519c"
 county_labeller <- function(x) if_else(x == 'California', x, glue('{x} County'))
 
 my_theme <- list(
