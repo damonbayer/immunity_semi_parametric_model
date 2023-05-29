@@ -217,6 +217,7 @@ posterior_predictive_score_setup <-
 posterior_predictive_score_nbinom <-
   posterior_predictive_score_setup %>%
   left_join(mean_phi_draws) %>%
+  drop_na() %>% 
   mutate(nbinom = pmap(
     list(true_value, phi, mean),
     ~c(

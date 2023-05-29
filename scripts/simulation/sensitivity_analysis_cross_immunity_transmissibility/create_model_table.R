@@ -78,6 +78,15 @@ expand_grid(max_t_tbl %>%
               mutate(max_t = map2(first_max_t, last_max_t, ~.x:.y)) %>% 
               select(data_takeover_speed = takeover_speed, max_t) %>% 
               unnest(max_t)) %>% 
+  bind_rows(.,
+            expand_grid(immunity_model = "seq-informed-bin",
+                        `R₀_model` = "constant",
+                        prior_takeover_speed = c("slow", "medium", "fast", "wide")) %>% 
+  mutate(CDR_model = "constant") %>% 
+  expand_grid(max_t_tbl %>% 
+                mutate(max_t = map2(first_max_t, last_max_t, ~.x:.y)) %>% 
+                select(data_takeover_speed = takeover_speed, max_t) %>% 
+                unnest(max_t))) %>% 
   mutate(sim_id = 1) %>% 
   mutate(fit_id = 1:n()) %>% 
   select(fit_id, sim_id, max_t, data_takeover_speed, everything())

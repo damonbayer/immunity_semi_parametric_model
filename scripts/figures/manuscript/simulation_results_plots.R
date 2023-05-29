@@ -26,6 +26,7 @@ model_table <- read_csv(path(simulation_dir, "model_table.csv")) %>%
     ~ case_when(
       .x == "gmrf" ~ "GMRF",
       .x == "seq-informed" ~ "Genetic",
+      .x == "seq-informed-bin" ~ "GeneticBinomial",
       .x == "constant" ~ "Constant",
       TRUE ~ .x
     )
