@@ -21,6 +21,13 @@ model_table <-
     "gmrf",      "constant",
     "constant",          "gmrf"
   )) %>% 
+  bind_rows(.,
+            initialization_values %>% 
+              distinct(county_id = id, county) %>% 
+              filter(county %in% c("Orange", "California")) %>% 
+              expand_grid(max_t = 30:36,
+                          CDR_model = "gmrf") %>% 
+              expand_grid(tibble(`R₀_model` = "constant", immunity_model = "seq-informed-bin"))) %>% 
   mutate(fit_id = 1:n(), .before = 1)
 
 write_csv(model_table, path("scripts", "real_data", context, "model_table", ext = "csv"))

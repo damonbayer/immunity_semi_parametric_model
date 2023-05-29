@@ -27,6 +27,7 @@ model_table <-
     ~ case_when(
       .x == "gmrf" ~ "GMRF",
       .x == "seq-informed" ~ "Genetic",
+      .x == "seq-informed-bin" ~ "GeneticBinomial",
       .x == "constant" ~ "Constant",
       TRUE ~ .x
     )
@@ -340,7 +341,7 @@ plot_peak_assessment <- function(target_peak_type) {
     geom_text(data = tmp_peak_annotation, mapping = aes(x = min_date, y = value, label = label_hline, hjust = "inward", vjust = "inward")) +
     geom_pointinterval(mapping = aes(ymin = .lower, ymax = .upper)) +
     scale_y_continuous(glue("Peak {str_to_title(target_peak_type)}"), labels = comma) +
-    scale_x_date(name = "Forecast Date", date_labels = "%b %d", breaks = unique(tmp_dat$max_date)) +
+    scale_x_date(name = "Forecast Date", date_labels = "%b %d", breaks = unique(tmp_tidy_posterior_peak$max_date)) +
     ggtitle(glue("Posterior Peak Hospital Occupancy {str_to_title(target_peak_type)}"))
 }
 

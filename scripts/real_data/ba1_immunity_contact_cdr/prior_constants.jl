@@ -2,7 +2,7 @@
 const time_interval_in_days = 7.0
 
 # Location
-if "seq-informed" ∈ [immunity_model, CDR_model, R₀_model]
+if "seq-informed" ∈ [immunity_model, CDR_model, R₀_model] | "seq-informed-bin" ∈ [immunity_model, CDR_model, R₀_model]
     # variant2:variant1 ratio
     const variant_ratio_at_logistic_growth_offset_time_non_centered_loc = logit(0.05)
     const time_to_saturation_non_centered_loc = log(7)
@@ -13,7 +13,7 @@ if immunity_model == "constant"
 elseif immunity_model == "gmrf"
     const σ_dur_immune_non_centered_loc = -2
     const dur_immune_init_non_centered_loc = log(12)
-elseif immunity_model == "seq-informed"
+elseif immunity_model == "seq-informed" | immunity_model == "seq-informed-bin"
     const prop_variant_2_immunity_offset_non_centered_loc = log(1)
     const dur_saturated_immune_non_centered_loc = log(12)
     const prop_dur_mixed_immune_non_centered_loc = logit(0.25)
@@ -25,7 +25,7 @@ if CDR_model == "constant"
 elseif CDR_model == "gmrf"
     const σ_ρ_cases_non_centered_loc = -2
     const ρ_cases_init_non_centered_loc = logit(0.2)
-elseif CDR_model == "seq-informed"
+elseif CDR_model == "seq-informed" | CDR_model == "seq-informed-bin"
     const ρ_cases_non_centered_variant_1_loc = logit(0.2)
     const ρ_cases_non_centered_variant_2_loc = logit(0.1)
 end
@@ -35,7 +35,7 @@ if R₀_model == "constant"
 elseif R₀_model == "gmrf"
     const σ_R₀_non_centered_loc = -2
     const R₀_init_non_centered_loc = log(5)
-elseif R₀_model == "seq-informed"
+elseif R₀_model == "seq-informed" | R₀_model == "seq-informed-bin"
     const R₀_non_centered_variant_1_loc = log(5)
     const R₀_non_centered_variant_2_loc = log(5 * 1.5)
 end
@@ -55,7 +55,7 @@ const R_init_prop_non_centered_loc = logit(3 / 4)
 
 
 # Scale
-if "seq-informed" ∈ [immunity_model, CDR_model, R₀_model]
+if "seq-informed" ∈ [immunity_model, CDR_model, R₀_model] | "seq-informed-bin" ∈ [immunity_model, CDR_model, R₀_model]
     # variant2:variant1 ratio
     const variant_ratio_at_logistic_growth_offset_time_non_centered_scale = 0.5
     const time_to_saturation_non_centered_scale = 0.4
@@ -66,7 +66,7 @@ if immunity_model == "constant"
 elseif immunity_model == "gmrf"
     const σ_dur_immune_non_centered_scale = 0.1
     const dur_immune_init_non_centered_scale = 0.2
-elseif immunity_model == "seq-informed"
+elseif immunity_model == "seq-informed" | immunity_model == "seq-informed-bin"
     const prop_variant_2_immunity_offset_non_centered_scale = 0.8
     const dur_saturated_immune_non_centered_scale = 0.05
     const prop_dur_mixed_immune_non_centered_scale = 0.3
@@ -78,7 +78,7 @@ if CDR_model == "constant"
 elseif CDR_model == "gmrf"
     const σ_ρ_cases_non_centered_scale = 0.1
     const ρ_cases_init_non_centered_scale = 0.2
-elseif CDR_model == "seq-informed"
+elseif CDR_model == "seq-informed" | CDR_model == "seq-informed-bin"
     const ρ_cases_non_centered_variant_1_scale = 0.2
     const ρ_cases_non_centered_variant_2_scale = 0.2
 end
@@ -88,7 +88,7 @@ if R₀_model == "constant"
 elseif R₀_model == "gmrf"
     const σ_R₀_non_centered_scale = 0.1
     const R₀_init_non_centered_scale = 0.2
-elseif R₀_model == "seq-informed"
+elseif R₀_model == "seq-informed" | R₀_model == "seq-informed-bin"
     const R₀_non_centered_variant_1_scale = 0.2
     const R₀_non_centered_variant_2_scale = 0.2
 end

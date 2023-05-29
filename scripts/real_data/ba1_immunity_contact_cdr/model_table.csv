@@ -55,3 +55,17 @@ fit_id,county_id,county,max_t,CDR_model,R₀_model,immunity_model
 54,64,California,36,gmrf,constant,seq-informed
 55,64,California,36,gmrf,gmrf,constant
 56,64,California,36,gmrf,constant,gmrf
+57,30,Orange,30,gmrf,constant,seq-informed-bin
+58,30,Orange,31,gmrf,constant,seq-informed-bin
+59,30,Orange,32,gmrf,constant,seq-informed-bin
+60,30,Orange,33,gmrf,constant,seq-informed-bin
+61,30,Orange,34,gmrf,constant,seq-informed-bin
+62,30,Orange,35,gmrf,constant,seq-informed-bin
+63,30,Orange,36,gmrf,constant,seq-informed-bin
+64,64,California,30,gmrf,constant,seq-informed-bin
+65,64,California,31,gmrf,constant,seq-informed-bin
+66,64,California,32,gmrf,constant,seq-informed-bin
+67,64,California,33,gmrf,constant,seq-informed-bin
+68,64,California,34,gmrf,constant,seq-informed-bin
+69,64,California,35,gmrf,constant,seq-informed-bin
+70,64,California,36,gmrf,constant,seq-informed-bin
