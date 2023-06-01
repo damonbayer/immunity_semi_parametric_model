@@ -22,12 +22,13 @@ time_to_date <- function(time) date_time_0 + time  * 7
 # Loading Data ------------------------------------------------------------
 model_table <- 
   read_csv(path(simulation_dir, "model_table.csv")) %>%
+  filter(immunity_model != "seq-informed") %>% 
   mutate(across(
     c(immunity_model, `R₀_model`, CDR_model),
     ~ case_when(
       .x == "gmrf" ~ "GMRF",
       .x == "seq-informed" ~ "Genetic",
-      .x == "seq-informed-bin" ~ "GeneticBinomial",
+      .x == "seq-informed-bin" ~ "Genetic",
       .x == "constant" ~ "Constant",
       TRUE ~ .x
     )
@@ -276,6 +277,31 @@ plot_crps_comparison_boxplot <- function(target_target_type) {
     scale_x_discrete("Model", labels = label_parse()) +
     ggtitle(glue("Continuous Ranked Probability Score for {my_sim_labeller[target_target_type]}"))
 }
+
+plot_crps_comparison_dotplot <- function(target_target_type) {
+  tidy_posterior_predictive_score_tbl %>%
+    filter(
+      target_type == target_target_type,
+      # weeks_ahead %in% c(1, 2, 4),
+      name == "crps_nbinom"
+    ) %>%
+    left_join(model_table) %>%
+    group_by(weeks_ahead, model_description, county) %>% 
+    summarize(mean_crps = mean(value)) %>% 
+    ggplot(aes(weeks_ahead, mean_crps, color = model_description)) +
+    facet_wrap(~county,
+               scales = "free",
+               ncol = 1,
+               labeller = labeller(county = ~glue("{county_labeller(.x)} Data"))
+    ) +
+    geom_line(linetype = "dashed", alpha = 0.5) +
+    geom_point(size = 3) +
+    scale_x_continuous("Forecast Horizon (Weeks)") +
+    scale_y_continuous("Mean CRPS", labels = comma) +
+    scale_color_discrete("Model", labels = label_parse()) +
+    ggtitle(glue("Continuous Ranked Probability Score for {my_sim_labeller[target_target_type]}")) +
+    theme(legend.position = "bottom")
+}
   
 plot_peak_assessment <- function(target_peak_type) {
   true_peak_time <-
@@ -328,7 +354,8 @@ plot_peak_assessment <- function(target_peak_type) {
     filter(name %in% tmp_tidy_posterior_peak$name) %>% 
     mutate(max_date = time_to_date(max_t))
   
-  ggplot(tmp_tidy_posterior_peak,
+  ggplot(tmp_tidy_posterior_peak %>% 
+           filter(.width %in% c(0.8, 0.95)),
          aes(max_date, value)) +
     facet_grid2(county~model_description,
                 labeller = labeller(county = ~glue("{county_labeller(.x)} Data"), model_description = label_parsed),
@@ -398,7 +425,7 @@ plot_peak_crps_boxplot <- function(x = NULL) {
     ggplot(aes(model_description, value, color = model_description)) +
     facet_grid2(target_type~county,
                 scales = "free", independent = "y",
-                labeller = labeller(county = ~glue("{county_labeller(.x)}"),
+                labeller = labeller(county = ~glue("{county_labeller(.x)} Data"),
                                     target_type = ~glue("Peak {str_to_title(.x)}"))) +
     geom_boxplot(show.legend = F) +
     geom_beeswarm(alpha = 0.5, show.legend = F) +
@@ -409,6 +436,24 @@ plot_peak_crps_boxplot <- function(x = NULL) {
       legend.position = "bottom",
       legend.text.align = 0
     )
+}
+
+plot_peak_crps_dotplot <- function(x = NULL) {
+  tidy_posterior_peak_score %>%
+    filter(name == "crps") %>%
+    rename(fit_id = model) %>%
+    left_join(model_table) %>%
+    group_by(model_description, county, target_type) %>% 
+    summarize(mean_crps = mean(value)) %>% 
+    ggplot(aes(model_description, mean_crps)) +
+    facet_grid2(target_type~county,
+                scales = "free", independent = "y",
+                labeller = labeller(county = ~glue("{county_labeller(.x)} Data"),
+                                    target_type = ~glue("Peak {str_to_title(.x)}"))) +
+    geom_point(size = 4) +
+    scale_y_continuous("Mean CRPS", labels = comma) +
+    scale_x_discrete("Model", labels = label_parse()) +
+    ggtitle(glue("Continuous Ranked Probability Score for Peak Hospitalization"))
 }
 
 # Create Figures ----------------------------------------------------------
@@ -446,6 +491,14 @@ crps_comparison_boxplot_plots <-
   ) %>%
   augment_figure_tbl()
 
+crps_comparison_dotplot_plots <-
+  tibble(target_type = all_target_types) %>%
+  mutate(
+    file_path = path(manuscript_figure_dir, glue("real_data_crps_comparison_dotplot_{target_type}_plot"), ext = "pdf"),
+    figure = future_map(target_type, plot_crps_comparison_dotplot)
+  ) %>%
+  augment_figure_tbl()
+
 peak_assessment_plots <-
   tibble(peak_type = all_peak_types) %>%
   mutate(
@@ -470,6 +523,14 @@ peak_crps_boxplot_plots <-
   ) %>%
   augment_figure_tbl()
 
+peak_crps_dotplot_plots <-
+  tibble(x = 1) %>%
+  mutate(
+    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_dotplot_plot"), ext = "pdf"),
+    figure = future_map(x, plot_peak_crps_dotplot)
+  ) %>%
+  augment_figure_tbl()
+
 # Save figures ------------------------------------------------------------
 forecast_comparison_plots %>%
   as.list() %>%
@@ -483,6 +544,10 @@ crps_comparison_boxplot_plots %>%
   as.list() %>%
   pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
 
+crps_comparison_dotplot_plots %>% 
+  as.list() %>%
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2.25))
+
 peak_assessment_plots %>%
   as.list() %>%
   pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
@@ -493,4 +558,8 @@ peak_crps_plots %>%
 
 peak_crps_boxplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
+
+peak_crps_dotplot_plots %>% 
+  as.list() %>%
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.5))

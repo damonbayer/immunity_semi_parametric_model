@@ -39,10 +39,10 @@ figure_tbl <-
                                date < ..3) %>%
                         select(
                           date,
-                          Cases = cases,
-                          Hospital = hospitalized,
-                          ICU = icu,
-                          Deaths = deaths,
+                          `New Cases` = cases,
+                          `Hospital Occupancy` = hospitalized,
+                          `ICU Occupancy` = icu,
+                          `New Deaths` = deaths,
                           `BA.1 Sequences` = lineage_count,
                           `Other Sequences` = other_count,
                           `Prop. BA.1 Sequences` = prop_lineage) %>% 
@@ -55,9 +55,7 @@ figure_tbl <-
                         geom_line() +
                         geom_point() +
                         scale_y_continuous(name = "Value", labels = comma) +
-                        scale_x_date("Date",
-                                     date_breaks = "2 months",
-                                     date_labels = "%m/%y") +
+                        scale_x_date(name = "Date", date_labels = "%b '%y", date_breaks = "2 months", guide = guide_axis(angle = 90)) +
                         ggtitle(glue("{..4} BA.1 Wave"))
   })) %>% 
   mutate(figure_dims = future_map(figure, gg_facet_dims)) %>%

@@ -21,12 +21,13 @@ source(path(simulation_dir, "computed_shared_constants.txt"))
 
 # Loading Data ------------------------------------------------------------
 model_table <- read_csv(path(simulation_dir, "model_table.csv")) %>%
+  filter(immunity_model != "seq-informed") %>% 
   mutate(across(
     c(immunity_model, `R₀_model`, CDR_model),
     ~ case_when(
       .x == "gmrf" ~ "GMRF",
       .x == "seq-informed" ~ "Genetic",
-      .x == "seq-informed-bin" ~ "GeneticBinomial",
+      .x == "seq-informed-bin" ~ "Genetic",
       .x == "constant" ~ "Constant",
       TRUE ~ .x
     )
@@ -233,7 +234,7 @@ plot_crps_comparison <- function(target_target_type) {
       weeks_ahead %in% c(1, 2, 4),
       name == "crps_nbinom"
     ) %>%
-    left_join(model_table) %>%
+    right_join(model_table) %>%
     select(weeks_ahead, value, max_t, forecast_horizon, model_description, data_takeover_speed) %>%
     
     ggplot(aes(max_t, value, color = model_description)) +
@@ -269,7 +270,7 @@ plot_crps_comparison_boxplot <- function(target_target_type) {
       weeks_ahead %in% c(1, 2, 4),
       name == "crps_nbinom"
     ) %>%
-    left_join(model_table) %>%
+    right_join(model_table) %>%
     select(weeks_ahead, value, max_t, forecast_horizon, model_description, data_takeover_speed) %>%
     ggplot(aes(model_description, value, color = model_description)) +
     facet_grid2(forecast_horizon~data_takeover_speed,
@@ -281,6 +282,33 @@ plot_crps_comparison_boxplot <- function(target_target_type) {
     geom_beeswarm(alpha = 0.5, show.legend = F) +
     scale_y_continuous("CRPS", labels = comma) +
     scale_x_discrete("Model", labels = label_parse()) +
+    ggtitle(glue("Continuous Ranked Probability Score for {my_sim_labeller[target_target_type]}")) +
+    theme(
+      legend.position = "bottom",
+      legend.text.align = 0
+    )
+}
+
+plot_crps_comparison_dotplot <- function(target_target_type) {
+  tidy_posterior_predictive_score_tbl %>%
+    filter(
+      target_type == target_target_type,
+      name == "crps_nbinom"
+    ) %>%
+    right_join(model_table) %>%
+    group_by(weeks_ahead, model_description, data_takeover_speed) %>% 
+    summarize(mean_crps = mean(value)) %>% 
+    ggplot(aes(weeks_ahead, mean_crps, color = model_description)) +
+    facet_wrap(~data_takeover_speed,
+               ncol = 1,
+               scales = "free",
+               labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"))
+    ) +
+    geom_line(linetype = "dashed", alpha = 0.5) +
+    geom_point(size = 3) +
+    scale_y_continuous("Mean CRPS", labels = comma) +
+    scale_x_continuous("Forecast Horizon (Weeks)") +
+    scale_color_discrete("Model", labels = label_parse()) +
     ggtitle(glue("Continuous Ranked Probability Score for {my_sim_labeller[target_target_type]}")) +
     theme(
       legend.position = "bottom",
@@ -311,7 +339,7 @@ plot_peak_assessment <- function(target_peak_type) {
   tmp_tidy_posterior_peak <-
     tidy_posterior_peak %>%
     filter(peak_type == target_peak_type) %>%
-    left_join(model_table, by = "fit_id")
+    right_join(model_table, by = "fit_id")
   
   tmp_peak_annotation <- 
     tmp_tidy_posterior_peak %>% 
@@ -336,7 +364,8 @@ plot_peak_assessment <- function(target_peak_type) {
     mutate(data_takeover_speed = fct_rev(data_takeover_speed)) %>% 
     filter(name %in% tmp_tidy_posterior_peak$name)
   
-  ggplot(tmp_tidy_posterior_peak,
+  ggplot(tmp_tidy_posterior_peak %>% 
+           filter(.width %in% c(0.8, 0.95)),
          aes(max_t, value)) +
     facet_grid2(data_takeover_speed~model_description,
                 labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"), model_description = label_parsed),
@@ -367,7 +396,7 @@ plot_peak_crps <- function(x = NULL) {
   tidy_posterior_peak_score %>%
     filter(name == "crps") %>%
     rename(fit_id = model) %>%
-    left_join(model_table) %>%
+    right_join(model_table) %>%
     ggplot(aes(max_t, value, color = model_description)) +
     facet_grid2(target_type~data_takeover_speed,
                 scales = "free", independent = "y",
@@ -401,7 +430,7 @@ plot_peak_crps_boxplot <- function(x = NULL) {
   tidy_posterior_peak_score %>%
     filter(name == "crps") %>%
     rename(fit_id = model) %>%
-    left_join(model_table) %>%
+    right_join(model_table) %>%
     ggplot(aes(model_description, value, color = model_description)) +
     facet_grid2(target_type~data_takeover_speed,
                 scales = "free", independent = "y",
