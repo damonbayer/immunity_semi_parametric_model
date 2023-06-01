@@ -20,6 +20,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
     if "seq-informed-bin" ∈ [immunity_model, CDR_model, R₀_model]
         variant_ratio_at_logistic_growth_offset_time_non_centered ~ Normal()
         time_to_saturation_non_centered ~ Normal()
+        ϕ_seq_non_centered ~ truncated(Normal(), 0, Inf)
+        ϕ_seq = ϕ_seq_non_centered^-2
     end
 
     if immunity_model == "seq-informed-bin"
@@ -245,7 +247,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     if "seq-informed-bin" ∈ [immunity_model, CDR_model, R₀_model]
         prop_variant_2_seq = prop_variant_2_fn(seq_obstimes)
         for i in 1:l_seq_obstimes
-            data_new_seq_variant_2[i] ~ Binomial(data_new_seq[i], prop_variant_2_seq[i])
+            data_new_seq_variant_2[i] ~ BetaBinomial2(data_new_seq[i], prop_variant_2_seq[i], ϕ_seq)
         end
     end
 
@@ -310,6 +312,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
         gq = merge(gq, (σ_dur_immune=σ_dur_immune,))
     elseif immunity_model == "seq-informed-bin"
         gq = merge(gq, (
+            ϕ_seq=ϕ_seq,
             prop_variant_2_immunity_offset=prop_variant_2_immunity_offset,
             dur_saturated_immune=dur_saturated_immune,
             prop_dur_mixed_immune=prop_dur_mixed_immune,

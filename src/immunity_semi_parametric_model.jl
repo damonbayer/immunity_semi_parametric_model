@@ -15,6 +15,14 @@ function NegativeBinomial2(μ, ϕ)
 end
 export NegativeBinomial2
 
+function BetaBinomial2(n, μ, ϕ)
+    α = μ * ϕ
+    β = (1 - μ) * ϕ
+    α = clamp(α, nextfloat(zero(α)), prevfloat(typemax(α)))
+    β = clamp(β, nextfloat(zero(β)), prevfloat(typemax(β)))
+    Distributions.BetaBinomial(n, α, β)
+end
+export BetaBinomial2
 
 # utilities for working with Turing model parameter names using only the DynamicPPL API
 

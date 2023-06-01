@@ -20,6 +20,8 @@ prob = ODEProblem{true}(seirs_ode_log!,
     if "seq-informed-bin" ∈ [immunity_model, CDR_model, R₀_model]
         variant_ratio_at_logistic_growth_offset_time_non_centered ~ Normal()
         time_to_saturation_non_centered ~ Normal()
+        ϕ_seq_non_centered ~ truncated(Normal(), 0, Inf)
+        ϕ_seq = ϕ_seq_non_centered^-2
     end
 
     if immunity_model == "seq-informed-bin"
