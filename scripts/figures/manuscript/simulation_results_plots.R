@@ -315,7 +315,6 @@ plot_crps_comparison_dotplot <- function(target_target_type) {
       legend.text.align = 0
     )
 }
-  
 
 plot_peak_assessment <- function(target_peak_type) {
   true_peak_time <-
@@ -446,6 +445,25 @@ plot_peak_crps_boxplot <- function(x = NULL) {
       legend.text.align = 0
     )
 }
+
+plot_peak_crps_dotplot <- function(x = NULL) {
+  tidy_posterior_peak_score %>%
+    filter(name == "crps") %>%
+    rename(fit_id = model) %>%
+    right_join(model_table) %>%
+    group_by(model_description, data_takeover_speed, target_type) %>% 
+    summarize(mean_crps = mean(value)) %>% 
+    ggplot(aes(model_description, mean_crps)) +
+    facet_grid2(target_type~data_takeover_speed,
+                scales = "free", independent = "y",
+                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"),
+                                    target_type = ~glue("Peak {str_to_title(.x)}"))) +
+    geom_point(size = 4) +
+    scale_y_continuous("Mean CRPS", labels = comma) +
+    scale_x_discrete("Model", labels = label_parse()) +
+    ggtitle(glue("Continuous Ranked Probability Score for Peak Hospitalization"))
+}
+
 # Create Figures ----------------------------------------------------------
 augment_figure_tbl <- function(figure_tbl) {
   figure_tbl %>%
@@ -481,6 +499,14 @@ crps_comparison_boxplot_plots <-
   ) %>%
   augment_figure_tbl()
 
+crps_comparison_dotplot_plots <-
+  tibble(target_type = all_target_types) %>%
+  mutate(
+    file_path = path(manuscript_figure_dir, glue("real_data_crps_comparison_dotplot_{target_type}_plot"), ext = "pdf"),
+    figure = future_map(target_type, plot_crps_comparison_dotplot)
+  ) %>%
+  augment_figure_tbl()
+
 peak_assessment_plots <-
   tibble(peak_type = all_peak_types) %>%
   mutate(
@@ -505,6 +531,14 @@ peak_crps_boxplot_plots <-
   ) %>%
   augment_figure_tbl()
 
+peak_crps_dotplot_plots <-
+  tibble(x = 1) %>%
+  mutate(
+    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_dotplot_plot"), ext = "pdf"),
+    figure = future_map(x, plot_peak_crps_dotplot)
+  ) %>%
+  augment_figure_tbl()
+
 # Save figures ------------------------------------------------------------
 forecast_comparison_plots %>%
   as.list() %>%
@@ -518,6 +552,10 @@ crps_comparison_boxplot_plots %>%
   as.list() %>%
   pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
 
+crps_comparison_dotplot_plots %>% 
+  as.list() %>%
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2.25))
+
 peak_assessment_plots %>%
   as.list() %>%
   pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75, base_height = 2.5))
@@ -529,3 +567,7 @@ peak_crps_plots %>%
 peak_crps_boxplot_plots %>% 
   as.list() %>%
   pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
+
+peak_crps_dotplot_plots %>% 
+  as.list() %>%
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.5))
