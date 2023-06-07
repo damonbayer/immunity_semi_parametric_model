@@ -222,8 +222,10 @@ plot_forecast_comparison <- function(target_type, target_data_takeover_speed) {
     scale_y_continuous(name = my_sim_labeller[target_type], labels = comma) +
     scale_x_continuous(name = "Time") +
     my_theme +
+    scale_fill_brewer(name = "Predictive Interval Width",
+                      labels = ~percent(as.numeric(.))) +
     ggtitle(glue("Forecast Comparison for {my_sim_labeller[target_type]}"),
-      subtitle = glue("{str_to_title(target_data_takeover_speed)} Takeover Data")
+      subtitle = glue("{str_to_title(target_data_takeover_speed)} Takeover Speed Data")
     )
 }
 
@@ -241,7 +243,7 @@ plot_crps_comparison <- function(target_target_type) {
     facet_grid2(forecast_horizon~data_takeover_speed,
                        independent = "y",
                scales = "free",
-               labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"))
+               labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Speed Data"))
     ) +
     # stat_smooth(
     #   geom = "line",
@@ -276,7 +278,7 @@ plot_crps_comparison_boxplot <- function(target_target_type) {
     facet_grid2(forecast_horizon~data_takeover_speed,
                 independent = "y",
                 scales = "free",
-                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"))
+                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Speed Data"))
     ) +
     geom_boxplot(show.legend = F) +
     geom_beeswarm(alpha = 0.5, show.legend = F) +
@@ -302,7 +304,7 @@ plot_crps_comparison_dotplot <- function(target_target_type) {
     facet_wrap(~data_takeover_speed,
                ncol = 1,
                scales = "free",
-               labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"))
+               labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Speed Data"))
     ) +
     geom_line(linetype = "dashed", alpha = 0.5) +
     geom_point(size = 3) +
@@ -367,7 +369,7 @@ plot_peak_assessment <- function(target_peak_type) {
            filter(.width %in% c(0.8, 0.95)),
          aes(max_t, value)) +
     facet_grid2(data_takeover_speed~model_description,
-                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"), model_description = label_parsed),
+                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Speed Data"), model_description = label_parsed),
                 scales = "free",
                 independent = "x"
     ) +
@@ -378,7 +380,7 @@ plot_peak_assessment <- function(target_peak_type) {
     geom_pointinterval(mapping = aes(ymin = .lower, ymax = .upper)) +
     scale_y_continuous(glue("Peak {str_to_title(target_peak_type)}"), labels = comma) +
     scale_x_continuous("Forecast Time") +
-    ggtitle(glue("Posterior Peak Hospital Occupancy {str_to_title(target_peak_type)}"))
+    ggtitle(glue("Peak Hospital Occupancy {str_to_title(target_peak_type)} Forecasts"))
 }
 
 plot_peak_crps <- function(x = NULL) {
@@ -399,7 +401,7 @@ plot_peak_crps <- function(x = NULL) {
     ggplot(aes(max_t, value, color = model_description)) +
     facet_grid2(target_type~data_takeover_speed,
                 scales = "free", independent = "y",
-                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"),
+                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Speed Data"),
                                     target_type = ~glue("Peak {str_to_title(.x)}"))) +
     # stat_smooth(
     #   geom = "line",
@@ -433,7 +435,7 @@ plot_peak_crps_boxplot <- function(x = NULL) {
     ggplot(aes(model_description, value, color = model_description)) +
     facet_grid2(target_type~data_takeover_speed,
                 scales = "free", independent = "y",
-                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"),
+                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Speed Data"),
                                     target_type = ~glue("Peak {str_to_title(.x)}"))) +
     geom_boxplot(show.legend = F) +
     geom_beeswarm(alpha = 0.5, show.legend = F) +
@@ -456,12 +458,13 @@ plot_peak_crps_dotplot <- function(x = NULL) {
     ggplot(aes(model_description, mean_crps)) +
     facet_grid2(target_type~data_takeover_speed,
                 scales = "free", independent = "y",
-                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Data"),
+                labeller = labeller(data_takeover_speed = ~glue("{str_to_title(.x)} Takeover Speed Data"),
                                     target_type = ~glue("Peak {str_to_title(.x)}"))) +
     geom_point(size = 4) +
     scale_y_continuous("Mean CRPS", labels = comma) +
     scale_x_discrete("Model", labels = label_parse()) +
-    ggtitle(glue("Continuous Ranked Probability Score for Peak Hospitalization"))
+    ggtitle(glue("Continuous Ranked Probability Score for Peak Hospitalization")) +
+    theme(panel.background = element_rect(colour = "grey85", linewidth = 1))
 }
 
 # Create Figures ----------------------------------------------------------
@@ -502,7 +505,7 @@ crps_comparison_boxplot_plots <-
 crps_comparison_dotplot_plots <-
   tibble(target_type = all_target_types) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_crps_comparison_dotplot_{target_type}_plot"), ext = "pdf"),
+    file_path = path(manuscript_figure_dir, glue("simulated_crps_comparison_dotplot_{target_type}_plot"), ext = "pdf"),
     figure = future_map(target_type, plot_crps_comparison_dotplot)
   ) %>%
   augment_figure_tbl()
@@ -534,7 +537,7 @@ peak_crps_boxplot_plots <-
 peak_crps_dotplot_plots <-
   tibble(x = 1) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_dotplot_plot"), ext = "pdf"),
+    file_path = path(manuscript_figure_dir, glue("simulated_peak_crps_dotplot_plot"), ext = "pdf"),
     figure = future_map(x, plot_peak_crps_dotplot)
   ) %>%
   augment_figure_tbl()
@@ -542,7 +545,7 @@ peak_crps_dotplot_plots <-
 # Save figures ------------------------------------------------------------
 forecast_comparison_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75, base_height = 2.25))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.5, base_height = 2))
 
 crps_comparison_plots %>%
   as.list() %>%
@@ -550,15 +553,15 @@ crps_comparison_plots %>%
 
 crps_comparison_boxplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
 
 crps_comparison_dotplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2.25))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2.5, base_height = 3))
 
 peak_assessment_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75, base_height = 2.5))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75, base_height = 3.0))
 
 peak_crps_plots %>%
   as.list() %>%
@@ -566,8 +569,8 @@ peak_crps_plots %>%
 
 peak_crps_boxplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
 
 peak_crps_dotplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.5))
+  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.75, base_height = 3))

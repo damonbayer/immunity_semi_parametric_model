@@ -44,7 +44,7 @@ figure_tbl <-
                           `ICU Occupancy` = icu,
                           `New Deaths` = deaths,
                           `BA.1 Sequences` = lineage_count,
-                          `Other Sequences` = other_count,
+                          `All Sequences` = total_count,
                           `Prop. BA.1 Sequences` = prop_lineage) %>% 
                         pivot_longer(-date) %>% 
                         drop_na() %>% 
@@ -56,7 +56,7 @@ figure_tbl <-
                         geom_point() +
                         scale_y_continuous(name = "Value", labels = comma) +
                         scale_x_date(name = "Date", date_labels = "%b '%y", date_breaks = "2 months", guide = guide_axis(angle = 90)) +
-                        ggtitle(glue("{..4} BA.1 Wave"))
+                        ggtitle(glue("{..4} Omicron BA.1 Wave"))
   })) %>% 
   mutate(figure_dims = future_map(figure, gg_facet_dims)) %>%
   unnest_wider(figure_dims) %>%

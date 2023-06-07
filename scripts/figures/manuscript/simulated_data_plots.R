@@ -28,7 +28,13 @@ simulated_data <-
   )) %>% 
   mutate(time = if_else(str_detect(name, "seq"), variant_2_import_time - 1 + (time - 1) / 7, time)) %>%
   mutate(time = time - (first_obs_time - 1)) %>% 
-  mutate(name = fct_relevel(name, data_order))
+  mutate(name = fct_relevel(name, data_order)) %>% 
+  bind_rows(.,
+            filter(., str_detect(name, "seq")) %>% 
+              group_by(takeover_speed, time, variant_2_import_time) %>% 
+              summarize(value = sum(value), .groups = "drop") %>% 
+              mutate(name = "data_new_seq_total")) %>% 
+  filter(name != "data_new_seq_variant_1")
 
 model_table <- read_csv(path("scripts", "simulation", context, "model_table.csv"))
 
@@ -57,7 +63,7 @@ simulated_binned_data_plots_tbl <-
       scale_x_continuous("Time") +
       scale_y_continuous("Count", label = comma) +
       ggtitle("Simulated Data",
-              subtitle = glue("{str_to_title(..1)} Novel Variant Takeover"))
+              subtitle = glue("{str_to_title(..1)} Novel Variant Takeover Speed"))
   })) %>% 
   mutate(figure_dims = map(figure, gg_facet_dims)) %>%
   unnest_wider(figure_dims) %>%
@@ -96,12 +102,12 @@ proportion_novel_variant_simulated_data_plot <-
              alpha = 0.5,
              show.legend = F) +
   geom_line() +
-  scale_y_continuous(TeX(r"(Proportion Novel Variant $\left( \delta(t) \right)$)"),
+  scale_y_continuous(TeX(r"(Novel Variant Proportion $\left( \delta(t) \right)$)"),
                      labels = percent) +
   scale_x_continuous("Time") +
   scale_color_discrete("Novel Variant Takeover Speed", labels = str_to_title) +
   theme(legend.position = "bottom") +
-  ggtitle("Proportion Novel Variant for Simulated Datasets", subtitle = "Dashed line indicates first novel variant import time")
+  ggtitle("Novel Variant Proportion for Simulated Datasets", subtitle = "Dashed line indicates first novel variant import time")
 
 save_plot(filename = path(manuscript_figure_dir, "proportion_novel_variant_simulated_data_plot", ext = "pdf"),
           plot = proportion_novel_variant_simulated_data_plot,

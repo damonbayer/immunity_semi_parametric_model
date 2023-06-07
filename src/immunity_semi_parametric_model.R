@@ -132,7 +132,8 @@ data_order <- c(
   "data_icu",
   "data_new_deaths",
   "data_new_seq_variant_2",
-  "data_new_seq_variant_1")
+  "data_new_seq_variant_1",
+  "data_new_seq_total")
 
 my_sim_labeller <- c(
   "data_new_cases" = "New Cases",
@@ -140,7 +141,8 @@ my_sim_labeller <- c(
   "data_icu" = "ICU Occupancy",
   "data_new_deaths" = "New Deaths",
   "data_new_seq_variant_2" = "Novel Variant Sequences",
-  "data_new_seq_variant_1" = "Other Variant Sequences")
+  "data_new_seq_variant_1" = "Other Variant Sequences",
+  "data_new_seq_total" = "All Sequences")
 
 my_sim_labeller_fn <- as_labeller(my_sim_labeller)
 
@@ -150,7 +152,8 @@ my_real_labeller <- c(
   "data_icu" = "ICU Occupancy",
   "data_new_deaths" = "New Deaths",
   "data_new_seq_variant_2" = "BA.1 Variant Sequences",
-  "data_new_seq_variant_1" = "Other Variant Sequences")
+  "data_new_seq_variant_1" = "Other Variant Sequences",
+  "data_new_seq_total" = "All Sequences")
 
 my_real_labeller_fn <- as_labeller(my_real_labeller)
 
