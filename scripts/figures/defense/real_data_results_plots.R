@@ -179,7 +179,7 @@ plot_forecast_comparison <- function(target_type, target_county) {
     filter(
       distribution == "posterior",
       name == target_type,
-      weeks_ahead %in% c(1, 2, 4)
+      weeks_ahead %in% c(2, 4)
     ) %>%
     left_join(model_table, by = "fit_id") %>%
     filter(county == target_county)
@@ -293,7 +293,7 @@ plot_crps_comparison_dotplot <- function(target_target_type) {
     ggplot(aes(weeks_ahead, mean_crps, color = model_description)) +
     facet_wrap(~county,
                scales = "free",
-               ncol = 1,
+               nrow = 1,
                labeller = labeller(county = ~glue("{county_labeller(.x)} Data"))
     ) +
     geom_line(linetype = "dashed", alpha = 0.5) +
@@ -473,7 +473,7 @@ forecast_comparison_plots <-
   expand_grid(target_type = all_target_types,
          target_county = all_counties) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_forecast_comparison_{target_type}_{target_county}_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_forecast_comparison_{target_type}_{target_county}_plot"), ext = "pdf"),
     figure = future_map2(target_type, target_county, plot_forecast_comparison)
   ) %>%
   augment_figure_tbl()
@@ -481,7 +481,7 @@ forecast_comparison_plots <-
 crps_comparison_plots <-
   tibble(target_type = all_target_types) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_crps_comparison_{target_type}_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_crps_comparison_{target_type}_plot"), ext = "pdf"),
     figure = future_map(target_type, plot_crps_comparison)
   ) %>%
   augment_figure_tbl()
@@ -489,7 +489,7 @@ crps_comparison_plots <-
 crps_comparison_boxplot_plots <-
   tibble(target_type = all_target_types) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_crps_comparison_boxplot_{target_type}_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_crps_comparison_boxplot_{target_type}_plot"), ext = "pdf"),
     figure = future_map(target_type, plot_crps_comparison_boxplot)
   ) %>%
   augment_figure_tbl()
@@ -497,7 +497,7 @@ crps_comparison_boxplot_plots <-
 crps_comparison_dotplot_plots <-
   tibble(target_type = all_target_types) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_crps_comparison_dotplot_{target_type}_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_crps_comparison_dotplot_{target_type}_plot"), ext = "pdf"),
     figure = future_map(target_type, plot_crps_comparison_dotplot)
   ) %>%
   augment_figure_tbl()
@@ -505,7 +505,7 @@ crps_comparison_dotplot_plots <-
 peak_assessment_plots <-
   tibble(peak_type = all_peak_types) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_peak_assessment_{peak_type}_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_peak_assessment_{peak_type}_plot"), ext = "pdf"),
     figure = future_map(peak_type, plot_peak_assessment)
   ) %>%
   augment_figure_tbl()
@@ -513,7 +513,7 @@ peak_assessment_plots <-
 peak_crps_plots <-
   tibble(x = 1) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_peak_crps_plot"), ext = "pdf"),
     figure = future_map(x, plot_peak_crps)
   ) %>%
   augment_figure_tbl()
@@ -521,7 +521,7 @@ peak_crps_plots <-
 peak_crps_boxplot_plots <-
   tibble(x = 1) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_boxplot_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_peak_crps_boxplot_plot"), ext = "pdf"),
     figure = future_map(x, plot_peak_crps_boxplot)
   ) %>%
   augment_figure_tbl()
@@ -529,7 +529,7 @@ peak_crps_boxplot_plots <-
 peak_crps_dotplot_plots <-
   tibble(x = 1) %>%
   mutate(
-    file_path = path(manuscript_figure_dir, glue("real_data_peak_crps_dotplot_plot"), ext = "pdf"),
+    file_path = path(defense_figure_dir, glue("real_data_peak_crps_dotplot_plot"), ext = "pdf"),
     figure = future_map(x, plot_peak_crps_dotplot)
   ) %>%
   augment_figure_tbl()
@@ -537,32 +537,53 @@ peak_crps_dotplot_plots <-
 # Save figures ------------------------------------------------------------
 forecast_comparison_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.5, base_height = 2.25))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = slide_target_asp, base_height = 2.7))
 
 crps_comparison_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = slide_target_asp, base_height = 2.5))
 
 crps_comparison_boxplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_heigh = 2.5))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = slide_target_asp, base_heigh = 2.5))
 
 crps_comparison_dotplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2.5, base_height = 3))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = slide_target_asp, base_height = 4))
 
 peak_assessment_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = slide_target_asp, base_height = 2.75))
 
 peak_crps_plots %>%
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = slide_target_asp, base_height = 2.5))
 
 peak_crps_boxplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 2, base_height = 2.5))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = slide_target_asp, base_height = 2.5))
 
 peak_crps_dotplot_plots %>% 
   as.list() %>%
-  pwalk(~ save_plot(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.5))
+  pwalk(~ save_plot_target_asp(filename = ..1, plot = ..2, ncol = ..3, nrow = ..4, base_asp = 1.5))
+
+
+generated_quantities_comparison_plot <- 
+  tidy_generated_quantities_tbl %>% 
+  right_join(model_table) %>% 
+  group_by(model_description) %>% 
+  filter(max_t == max(max_t)) %>% 
+  filter(!is.na(time),
+         .width == 0.5,
+         distribution == "posterior",
+         county == "California") %>% 
+  ggplot(aes(date, value, ymin = .lower, ymax = .upper, fill = model_description)) +
+  facet_wrap(~name, scales = "free_y") +
+  geom_lineribbon(alpha = 0.5) +
+  ggtitle("Posterior Distribution for Time-Varying Parameters", subtitle = "California Data") +
+  scale_x_date("Date") +
+  scale_y_continuous("Value") +
+  scale_fill_discrete("Model", labels = label_parse()) +
+  theme(legend.position = "bottom")
+
+save_plot_target_asp(filename = path(defense_figure_dir, "generated_quantities_comparison_plot", ext = "pdf"), plot = generated_quantities_comparison_plot, ncol = 4, nrow = 4, base_height = 1.75, device = cairo_pdf)

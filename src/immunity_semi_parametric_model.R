@@ -8,10 +8,18 @@ library(glue)
 library(fs)
 library(latex2exp)
 manuscript_figure_dir <- "~/Documents/dissertation/figures/ch_5"
-
+defense_figure_dir <- "figures/defense"
 theme_set(theme_minimal_grid())
 brewer_line_color <- "#08519c"
 county_labeller <- function(x) if_else(x == 'California', x, glue('{x} County'))
+
+slide_target_asp <- 1730/650
+
+save_plot_target_asp <- function (filename, plot, ncol = 1, nrow = 1, base_height = 3.71,
+                                  base_asp = 1730/650, base_width = NULL, ...) {
+  cowplot::save_plot(filename, plot, ncol = ncol, nrow = nrow, base_height = base_height,
+                     base_asp = base_asp * nrow / ncol, base_width = base_width, ...)
+}
 
 my_theme <- list(
   scale_fill_brewer(name = "Credible Interval Width",
