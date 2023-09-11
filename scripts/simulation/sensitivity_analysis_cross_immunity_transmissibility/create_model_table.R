@@ -89,6 +89,7 @@ expand_grid(max_t_tbl %>%
                 unnest(max_t))) %>% 
   mutate(sim_id = 1) %>% 
   mutate(fit_id = 1:n()) %>% 
+  mutate(IHR_model = "constant") %>% 
   select(fit_id, sim_id, max_t, data_takeover_speed, everything())
 
 write_lines(computed_shared_constants, path("scripts", "simulation", context, "computed_shared_constants", ext = "txt"))

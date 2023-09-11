@@ -40,13 +40,22 @@ elseif (R₀_model == "seq-informed") | (R₀_model == "seq-informed-bin")
     const R₀_non_centered_variant_2_loc = log(5 * 1.5)
 end
 
+if IHR_model == "constant"
+    const IHR_non_centered_loc = logit(0.01)
+elseif IHR_model == "gmrf"
+    const σ_IHR_non_centered_loc = -2
+    const IHR_init_non_centered_loc = logit(0.01)
+elseif (IHR_model == "seq-informed") | (IHR_model == "seq-informed-bin")
+    const IHR_non_centered_variant_1_loc = logit(0.01)
+    const IHR_non_centered_variant_2_loc = log(0.005)
+end
+
 const dur_latent_non_centered_loc = log(2 / 7)
 const dur_infectious_non_centered_loc = log(6 / 7)
 const dur_hospitalized_non_centered_loc = log(2.5 / 7)
 const dur_icu_non_centered_loc = log(4 / 7)
 const ρ_deaths_non_centered_loc = logit(0.9)
 const ρ_seq_non_centered_loc = logit(0.1)
-const IHR_non_centered_loc = logit(0.01)
 const HICUR_non_centered_loc = logit(0.17)
 const ICUDR_non_centered_loc = logit(0.15)
 const E_init_prop_non_centered_loc = logit(cases_week_0 /  0.2 * 1 / 3 / popsize)
@@ -93,13 +102,22 @@ elseif (R₀_model == "seq-informed") | (R₀_model == "seq-informed-bin")
     const R₀_non_centered_variant_2_scale = 0.2
 end
 
+if IHR_model == "constant"
+    const IHR_non_centered_scale = 0.2
+elseif IHR_model == "gmrf"
+    const σ_IHR_non_centered_scale = 0.1
+    const IHR_init_non_centered_scale = 0.2
+elseif (IHR_model == "seq-informed") | (IHR_model == "seq-informed-bin")
+    const IHR_non_centered_variant_1_scale = 0.2
+    const IHR_non_centered_variant_2_scale = 0.2
+end
+
 const dur_latent_non_centered_scale = 0.2
 const dur_infectious_non_centered_scale = 0.2
 const dur_hospitalized_non_centered_scale = 0.2
 const dur_icu_non_centered_scale = 0.2
 const ρ_deaths_non_centered_scale = 0.2
 const ρ_seq_non_centered_scale = 0.2
-const IHR_non_centered_scale = 0.2
 const HICUR_non_centered_scale = 0.2
 const ICUDR_non_centered_scale = 0.2
 const E_init_prop_non_centered_scale = 0.2

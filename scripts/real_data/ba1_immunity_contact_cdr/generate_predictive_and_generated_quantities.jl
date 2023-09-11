@@ -28,6 +28,7 @@ max_t = model_dict["max_t"]
 R₀_model = model_dict["R₀_model"]
 immunity_model = model_dict["immunity_model"]
 CDR_model = model_dict["CDR_model"]
+IHR_model = model_dict["IHR_model"]
 
 include(datadir("shared_constants.txt"))
 
@@ -37,10 +38,10 @@ include(simulationdir("prior_constants.jl"))
 include(projectdir("src", "ode_models", "seirs_log_ode.jl"))
 include(projectdir("src", "turing_models", "seirs_super_model_hifi_cdr.jl"))
 
-model_sample = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq_variant_1, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-11, 1e-8)
-model_optimization = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq_variant_1, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-13, 1e-10)
-model_generated_quantities = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, data_new_cases_forecast, data_new_deaths_forecast, data_hospitalizations_forecast, data_icu_forecast, data_new_seq_variant_1_forecast, data_new_seq_variant_2_forecast, immunity_model, CDR_model, R₀_model, obstimes_forecast, param_change_times_forecast, seq_obstimes_forecast, Tsit5(), 1e-13, 1e-10)
-model_predict = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, missing_data_new_cases_forecast, missing_data_new_deaths_forecast, missing_data_hospitalizations_forecast, missing_data_icu_forecast, missing_data_new_seq_variant_1_forecast, missing_data_new_seq_variant_2_forecast, immunity_model, CDR_model, R₀_model, obstimes_forecast, param_change_times_forecast, seq_obstimes_forecast, Tsit5(), 1e-13, 1e-10)
+model_sample = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq_variant_1, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, IHR_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-11, 1e-8)
+model_optimization = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq_variant_1, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, IHR_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-13, 1e-10)
+model_generated_quantities = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, data_new_cases_forecast, data_new_deaths_forecast, data_hospitalizations_forecast, data_icu_forecast, data_new_seq_variant_1_forecast, data_new_seq_variant_2_forecast, immunity_model, CDR_model, R₀_model, IHR_model, obstimes_forecast, param_change_times_forecast, seq_obstimes_forecast, Tsit5(), 1e-13, 1e-10)
+model_predict = seirs_super_model_hifi_cdr(prob, logistic_growth_time_offset, missing_data_new_cases_forecast, missing_data_new_deaths_forecast, missing_data_hospitalizations_forecast, missing_data_icu_forecast, missing_data_new_seq_variant_1_forecast, missing_data_new_seq_variant_2_forecast, immunity_model, CDR_model, R₀_model, IHR_model, obstimes_forecast, param_change_times_forecast, seq_obstimes_forecast, Tsit5(), 1e-13, 1e-10)
 
 prior_samples = load(results_dir("prior_samples_jld2", savename("prior_samples", (@dict fit_id), "jld2")))["prior_samples"]
 posterior_samples = load(results_dir("posterior_samples_jld2", savename("posterior_samples", (@dict fit_id), "jld2")))["posterior_samples"]

@@ -30,6 +30,7 @@ data_takeover_speed = model_dict["data_takeover_speed"]
 R₀_model = model_dict["R₀_model"]
 immunity_model = model_dict["immunity_model"]
 CDR_model = model_dict["CDR_model"]
+IHR_model = model_dict["IHR_model"]
 
 include(simulationdir("shared_constants.txt"))
 include(simulationdir("computed_shared_constants.txt"))
@@ -48,7 +49,7 @@ elseif data_takeover_speed == "fast"
     logistic_growth_time_offset = logistic_growth_time_offset_fast
 end
 
-model_sample = seirs_super_model_hifi_cdr_bin(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-11, 1e-8)
+model_sample = seirs_super_model_hifi_cdr_bin(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, IHR_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-11, 1e-8)
 
 n_samples = 250
 n_chains = 4

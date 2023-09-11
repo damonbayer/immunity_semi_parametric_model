@@ -13,7 +13,9 @@ model_table <-
   distinct(county_id = id, county) %>% 
   filter(county %in% c("Orange", "California")) %>% 
   expand_grid(max_t = 30:36,
-              CDR_model = "gmrf") %>% 
+              CDR_model = "gmrf",
+              IHR_model = "constant"
+              ) %>% 
   expand_grid(tribble(
     ~`R₀_model`, ~immunity_model,
     "seq-informed",  "seq-informed",
@@ -26,8 +28,23 @@ model_table <-
               distinct(county_id = id, county) %>% 
               filter(county %in% c("Orange", "California")) %>% 
               expand_grid(max_t = 30:36,
-                          CDR_model = "gmrf") %>% 
+                          CDR_model = "gmrf",
+                          IHR_model = "constant") %>% 
               expand_grid(tibble(`R₀_model` = "constant", immunity_model = "seq-informed-bin"))) %>% 
+  bind_rows(.,
+            initialization_values %>%
+              distinct(county_id = id, county) %>%
+              filter(county %in% c("Orange", "California")) %>%
+              expand_grid(max_t = 30:36,
+                          CDR_model = "constant",
+                          IHR_model = "gmrf") %>%
+              expand_grid(tribble(
+                ~`R₀_model`, ~immunity_model,
+                "seq-informed-bin",  "seq-informed-bin",
+                "constant",  "seq-informed-bin",
+                "gmrf",      "constant",
+                "constant",          "gmrf"
+              ))) %>%
   mutate(fit_id = 1:n(), .before = 1)
 
 write_csv(model_table, path("scripts", "real_data", context, "model_table", ext = "csv"))

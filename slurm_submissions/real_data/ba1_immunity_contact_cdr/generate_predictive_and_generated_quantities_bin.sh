@@ -9,7 +9,7 @@
 #SBATCH -o generate_predictive_and_generated_quantities-%A_%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
-#SBATCH --array=57-70
+#SBATCH --array=71-126
 
 module purge
 module load julia/1.8.5

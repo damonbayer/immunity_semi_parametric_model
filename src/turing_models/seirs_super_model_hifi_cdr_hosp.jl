@@ -4,7 +4,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     ones(9))
 
 @model function seirs_super_model_hifi_cdr_hosp(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq_variant_1, data_new_seq_variant_2, data_seq_hospitalizations,
-    immunity_model, CDR_model, R₀_model,
+    immunity_model, CDR_model, R₀_model, IHR_model,
     obstimes, param_change_times, seq_obstimes,
     DEAlgorithm, abstol, reltol)
 
@@ -15,6 +15,7 @@ prob = ODEProblem{true}(seirs_ode_log!,
     immunity_model ∈ ["constant", "gmrf", "seq-informed"] || throw(ArgumentError("'immunity_model' must be one of 'constant', 'gmrf', or 'seq-informed'"))
     CDR_model ∈ ["constant", "gmrf", "seq-informed"] || throw(ArgumentError("'CDR_model' must be one of 'constant', 'gmrf', or 'seq-informed'"))
     R₀_model ∈ ["constant", "gmrf", "seq-informed"] || throw(ArgumentError("'R₀_model' must be one of 'constant', 'gmrf', or 'seq-informed'"))
+    IHR_model ∈ ["constant", "gmrf", "seq-informed-bin"] || throw(ArgumentError("'IHR_model' must be one of 'constant', 'gmrf', or 'seq-informed-bin'"))
 
     # Priors
     if "seq-informed" ∈ [immunity_model, CDR_model, R₀_model]
@@ -58,13 +59,20 @@ prob = ODEProblem{true}(seirs_ode_log!,
         R₀_non_centered_variant_2 ~ Normal()
     end
 
+    if IHR_model == "constant"
+        IHR_non_centered ~ Normal()
+    elseif IHR_model == "gmrf"
+        IHR_params_non_centered ~ MvNormal(Zeros(l_param_change_times + 1), I) # +1 for inital value
+        σ_IHR_non_centered ~ Normal()
+    elseif IHR_model == "seq-informed-bin"
+    end
+
     dur_latent_non_centered ~ Normal()
     dur_infectious_non_centered ~ Normal()
     dur_hospitalized_non_centered ~ Normal()
     dur_icu_non_centered ~ Normal()
     HICUR_non_centered ~ Normal()
     ICUDR_non_centered ~ Normal()
-    IHR_non_centered ~ Normal()
 
     ρ_deaths_non_centered ~ Normal()
     ρ_seq_non_centered ~ Normal()
@@ -89,7 +97,6 @@ prob = ODEProblem{true}(seirs_ode_log!,
     ρ_deaths = logistic(ρ_deaths_non_centered * ρ_deaths_non_centered_scale + ρ_deaths_non_centered_loc)
     ρ_seq = logistic(ρ_seq_non_centered * ρ_seq_non_centered_scale + ρ_seq_non_centered_loc)
 
-    IHR   = logistic(IHR_non_centered * IHR_non_centered_scale + IHR_non_centered_loc)
     HICUR = logistic(HICUR_non_centered * HICUR_non_centered_scale + HICUR_non_centered_loc)
     ICUDR = logistic(ICUDR_non_centered * ICUDR_non_centered_scale + ICUDR_non_centered_loc)
 
@@ -176,6 +183,22 @@ prob = ODEProblem{true}(seirs_ode_log!,
         R₀_t = (1 .- prop_variant_2) .* R₀_variant_1 .+ prop_variant_2 .* R₀_variant_2
     end
 
+    if IHR_model == "constant"
+        IHR_init = logistic(IHR_non_centered * IHR_non_centered_scale + IHR_non_centered_loc)
+        IHR_t = fill(IHR_init, l_param_change_times + 1)
+        IHR_t_no_init = IHR_t[2:end]
+    elseif IHR_model == "gmrf"
+        σ_IHR = logistic(σ_IHR_non_centered * σ_IHR_non_centered_scale + σ_IHR_non_centered_loc)
+        IHR_init_non_centered = IHR_params_non_centered[1]
+        log_IHR_steps_non_centered = IHR_params_non_centered[2:end]
+        IHR_init = logistic(IHR_init_non_centered * IHR_init_non_centered_scale + IHR_init_non_centered_loc)
+
+        IHR_t_no_init = exp.(log(IHR_init) .+ cumsum(log_IHR_steps_non_centered) * σ_IHR)
+        IHR_t = vcat(IHR_init, IHR_t_no_init)
+
+    elseif IHR_model == "seq-informed-bin"
+    end
+
     # Natural scale transformation
 
     γ = 1 / dur_latent
@@ -205,11 +228,12 @@ prob = ODEProblem{true}(seirs_ode_log!,
 
     u0_reg_scale = [S_init, E_init, I_init, H_init, R_init, C_init, ICU_init, D_init]
     u0 = log.(u0_reg_scale)
-    p = [β_init, γ, ν, η, IHR, κ_init, HICUR, ω, ICUDR]
+    p = [β_init, γ, ν, η, IHR_init, κ_init, HICUR, ω, ICUDR]
 
     function param_affect_κ!(integrator)
         ind_t = searchsortedfirst(param_change_times, integrator.t) # Find the index of param_change_times that contains the current timestep
         integrator.p[1] = β_t_no_init[ind_t] # Replace β with a new value from β_t_no_init
+        integrator.p[5] = IHR_t_no_init[ind_t] # Replace IHR with a new value from IHR_t_no_init
         integrator.p[6] = κ_t_no_init[ind_t] # Replace κ with a new value from κ_t_no_init
     end
     param_callback = PresetTimeCallback(param_change_times, param_affect_κ!, save_positions=(false, false))

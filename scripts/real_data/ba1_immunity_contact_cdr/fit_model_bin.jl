@@ -1,4 +1,4 @@
-fit_id = isempty(ARGS) ? 57 : parse(Int64, ARGS[1])
+fit_id = isempty(ARGS) ? 71 : parse(Int64, ARGS[1])
 
 using Revise
 using DrWatson
@@ -27,6 +27,7 @@ max_t = model_dict["max_t"]
 R₀_model = model_dict["R₀_model"]
 immunity_model = model_dict["immunity_model"]
 CDR_model = model_dict["CDR_model"]
+IHR_model = model_dict["IHR_model"]
 
 include(datadir("shared_constants.txt"))
 
@@ -36,7 +37,7 @@ include(simulationdir("prior_constants.jl"))
 include(projectdir("src", "ode_models", "seirs_log_ode.jl"))
 include(projectdir("src", "turing_models", "seirs_super_model_hifi_cdr_bin.jl"))
 
-model_sample = seirs_super_model_hifi_cdr_bin(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-11, 1e-8)
+model_sample = seirs_super_model_hifi_cdr_bin(prob, logistic_growth_time_offset, data_new_cases, data_new_deaths, data_hospitalizations, data_icu, data_new_seq, data_new_seq_variant_2, immunity_model, CDR_model, R₀_model, IHR_model, obstimes, param_change_times, seq_obstimes, Tsit5(), 1e-11, 1e-8)
 
 n_samples = 250
 n_chains = 4

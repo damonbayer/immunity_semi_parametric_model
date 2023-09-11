@@ -9,7 +9,7 @@
 #SBATCH -o fit_models-%A_%a.out
 #SBATCH --mail-type=begin,end
 #SBATCH --mail-user=bayerd@uci.edu
-#SBATCH --array=57-70
+#SBATCH --array=71-126
 #SBATCH --exclude=hpc3-15-29,hpc3-21-30,hpc3-21-23
 
 module purge
