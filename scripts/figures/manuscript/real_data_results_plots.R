@@ -22,9 +22,9 @@ time_to_date <- function(time) date_time_0 + time  * 7
 # Loading Data ------------------------------------------------------------
 model_table <- 
   read_csv(path(simulation_dir, "model_table.csv")) %>%
-  filter(immunity_model != "seq-informed") %>% 
+  filter(immunity_model != "seq-informed", IHR_model == "gmrf") %>% 
   mutate(across(
-    c(immunity_model, `R₀_model`, CDR_model),
+    c(immunity_model, `R₀_model`, IHR_model),
     ~ case_when(
       .x == "gmrf" ~ "GMRF",
       .x == "seq-informed" ~ "Genetic",
